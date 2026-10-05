@@ -1,0 +1,80 @@
+name: Siteyi yayınla
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      atla: ${{ steps.paket.outputs.atla }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yüklenen paketi aç
+        id: paket
+        run: |
+          if [ -f site-paket.tgz ]; then
+            tar -xzf site-paket.tgz
+            git rm -q --cached site-paket.tgz || true
+            rm -f site-paket.tgz
+            echo "PAKET=1" >> $GITHUB_ENV
+          fi
+          if [ ! -f build.js ]; then echo "build.js yok, atlanıyor"; echo "ATLA=1" >> $GITHUB_ENV; echo "atla=1" >> $GITHUB_OUTPUT; fi
+
+      - name: Themis görselini al
+        if: env.ATLA != '1'
+        run: |
+          if [ ! -f assets/img/src-themis.png ]; then
+            curl -fsSL -o assets/img/src-themis.png "https://www.figma.com/api/mcp/asset/ebd0b2e8-5c08-4103-9f44-4195976a03f6.png" || rm -f assets/img/src-themis.png
+          fi
+
+      - name: Görselleri üret
+        if: env.ATLA != '1'
+        run: |
+          pip install --quiet pillow numpy
+          python3 scripts/gorseller.py
+
+      - name: Dosyaları depoya kaydet
+        if: env.ATLA != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || (git commit -m "Site dosyaları ve görseller" && git push)
+
+      - uses: actions/setup-node@v4
+        if: env.ATLA != '1'
+        with:
+          node-version: 20
+
+      - name: Siteyi derle
+        if: env.ATLA != '1'
+        run: node build.js --out=_site --base=/${{ github.event.repository.name }}
+
+      - uses: actions/upload-pages-artifact@v3
+        if: env.ATLA != '1'
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.atla != '1'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
