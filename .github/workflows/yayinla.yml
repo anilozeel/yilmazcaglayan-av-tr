@@ -43,8 +43,10 @@ jobs:
       - name: Görselleri üret
         if: env.ATLA != '1'
         run: |
-          pip install --quiet pillow numpy
-          python3 scripts/gorseller.py
+          if [ -f scripts/gorseller.py ]; then
+            pip install --quiet pillow numpy
+            python3 scripts/gorseller.py
+          fi
 
       - name: Dosyaları depoya kaydet
         if: env.ATLA != '1'
