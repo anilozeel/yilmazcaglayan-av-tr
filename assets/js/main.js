@@ -45,6 +45,7 @@
       var media = photos[i] && photos[i].querySelector('.hp-media');
       if (media) { media.style.animation = 'none'; void media.offsetWidth; media.style.animation = ''; }
       setActive(texts, i); setActive(photos, i);
+      if (photos[i]) hero.setAttribute('data-tone', photos[i].getAttribute('data-tone') || 'dark');
       dots.forEach(function (b, k) {
         b.classList.remove('is-active'); b.setAttribute('aria-selected', k === i ? 'true' : 'false');
         if (k === i) { void b.offsetWidth; b.classList.add('is-active'); }
