@@ -936,6 +936,58 @@
       '&target_name=' + encodeURIComponent(CFG.repo.owner) + '&expires_in=none&contents=write&actions=read';
     return 'https://github.com/settings/personal-access-tokens/new?' + q;
   }
+  function parseGeo(t) {
+    var v = String(t || '').trim(), m;
+    if (!v) return null;
+    m = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/.exec(v) || /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/.exec(v) || /[?&](?:q|query|destination|ll)=(-?\d+(?:\.\d+)?)(?:,|%2C)\s*(-?\d+(?:\.\d+)?)/i.exec(v) || /^(-?\d{1,2}(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:[.,]\d+)?)$/.exec(v);
+    if (!m) return false;
+    var lat = parseFloat(String(m[1]).replace(',', '.')), lng = parseFloat(String(m[2]).replace(',', '.'));
+    if (!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return false;
+    return { lat: Math.round(lat * 1e7) / 1e7, lng: Math.round(lng * 1e7) / 1e7 };
+  }
+  function contactCard() {
+    var c = S.contact || CFG.contact || {};
+    var geo = c.lat !== '' && c.lat != null ? c.lat + ', ' + c.lng : '';
+    function f(name, label, val, extra) { return '<label class="field"><span>' + label + '</span><input class="input" name="' + name + '" value="' + esc(val || '') + '"' + (extra || '') + '></label>'; }
+    return '<div class="card" id="set-ct"><div class="set-head"><h2>' + ic('home') + 'İletişim bilgileri ve konum</h2></div>' +
+      '<p>Sitedeki adres, telefon, e-posta, çalışma saatleri, harita ve "Yol Tarifi Al" bağlantısı buradaki bilgilerden oluşturulur. Ofis taşındığında buradan güncellemeniz yeterlidir.</p>' +
+      f('ct_street', 'Adres', c.street) +
+      '<div class="row2">' + f('ct_district', 'İlçe', c.district) + f('ct_city', 'İl', c.city) + '</div>' +
+      '<div class="row2">' + f('ct_phone', 'Telefon', c.phone, ' inputmode="tel"') + f('ct_email', 'E-posta', c.email, ' type="email"') + '</div>' +
+      '<div class="row2">' + f('ct_hours', 'Çalışma saatleri', c.hours) + f('ct_note', 'Kısa not', c.hoursNote) + '</div>' +
+      '<label class="field"><span>Harita konumu</span><input class="input" name="ct_geo" value="' + esc(geo) + '" placeholder="37.2372505, 27.5970421" spellcheck="false">' +
+      '<small>Google Haritalar\'da ofisin tam yerine sağ tıklayın (telefonda basılı tutun); çıkan koordinatı kopyalayıp buraya yapıştırın. Google Haritalar bağlantısını da yapıştırabilirsiniz. Boş bırakılırsa adres kullanılır. <a href="#" data-geo-check>Konumu haritada kontrol et</a></small></label>' +
+      '<div id="ct-msg"></div><button type="button" class="btn btn-gold" data-ct>İletişim bilgilerini kaydet</button></div>';
+  }
+  function bindContact() {
+    var chk = $('[data-geo-check]');
+    if (chk) chk.onclick = function (e) {
+      e.preventDefault();
+      var g = parseGeo($('[name=ct_geo]').value);
+      var q = g ? g.lat + ',' + g.lng : [$('[name=ct_street]').value, $('[name=ct_district]').value, $('[name=ct_city]').value].join(' ');
+      window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q), '_blank', 'noopener');
+    };
+    $('[data-ct]').onclick = function () {
+      var btn = this, box = '#ct-msg';
+      function say(t, m) { $(box).innerHTML = '<p class="msg msg-' + t + '">' + m + '</p>'; }
+      if (!ghToken()) return say('err', 'Kaydetmek için önce GitHub bağlantısını kurun.');
+      var v = function (n) { return oneLine($('[name=' + n + ']').value); };
+      var data = { street: v('ct_street'), district: v('ct_district'), city: v('ct_city'), phone: v('ct_phone'), email: v('ct_email'), hours: v('ct_hours'), hoursNote: v('ct_note'), lat: '', lng: '' };
+      if (!data.street || !data.district || !data.city) return say('err', 'Adres, ilçe ve il alanları boş bırakılamaz.');
+      if (data.phone.replace(/\D/g, '').length < 10) return say('err', 'Telefon numarası eksik görünüyor.');
+      if (data.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) return say('err', 'E-posta adresi geçerli görünmüyor.');
+      var g = parseGeo($('[name=ct_geo]').value);
+      if (g === false) return say('err', 'Harita konumu anlaşılamadı. Örnek biçim: <span class="code">37.2372505, 27.5970421</span>');
+      if (g) { data.lat = g.lat; data.lng = g.lng; }
+      busy(btn, true, 'Kaydediliyor');
+      $(box).innerHTML = '';
+      commitFiles([{ path: 'content/iletisim.json', b64: utf8b64(JSON.stringify(data, null, 2) + '\n') }], [], 'Panel: iletişim bilgileri güncellendi').then(function (sha) {
+        S.contact = data;
+        say('ok', 'Kaydedildi. Site 1–2 dakika içinde yeni bilgilerle güncellenir.');
+        trackDeploy(sha, siteUrl('/iletisim/'));
+      }).catch(function (e) { say('err', esc(e.message)); }).then(function () { busy(btn, false); });
+    };
+  }
   function viewSettings() {
     var ghOn = !!ghToken(), umOn = !!(umKey() && S.umamiId);
     shell('ayarlar', 'Ayarlar', 'Bağlantılar ve giriş bilgileri.', '',
@@ -958,6 +1010,7 @@
       '<label class="field"><span>API anahtarı</span><input class="input" name="umkey" type="password" autocomplete="off" spellcheck="false" placeholder="' + (umKey() ? 'Kayıtlı anahtar var' : 'api_…') + '"></label></div>' +
       '<div id="um-msg"></div><button type="button" class="btn btn-gold" data-um>Test et ve kaydet</button></div>' +
 
+      contactCard() +
       '<div class="card" id="set-pw"><div class="set-head"><h2>' + ic('lock') + 'Giriş bilgileri</h2></div>' +
       '<p>Panelin kullanıcı adı ve şifresini değiştirin. Güçlü bir şifre seçmeniz önerilir (en az 10 karakter, harf ve rakam).</p>' +
       '<div class="row2"><label class="field"><span>Mevcut şifre</span><input class="input" name="cur" type="password" autocomplete="current-password"></label>' +
@@ -969,6 +1022,7 @@
       '<div class="card"><div class="set-head"><h2>' + ic('out') + 'Oturum</h2><button type="button" class="btn btn-line" data-out>Çıkış yap</button></div><p style="margin:0">Ortak kullanılan bir bilgisayardaysanız işiniz bitince çıkış yapın.</p></div>');
 
     $('[data-out]').onclick = logout;
+    bindContact();
     function say(id, type, text) { $(id).innerHTML = '<p class="msg msg-' + type + '">' + text + '</p>'; }
 
     $('[data-gh]').onclick = function () {
