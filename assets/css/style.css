@@ -180,7 +180,7 @@ a:hover .more .icon, .more:hover .icon { transform: translateX(4px); }
 .about-text { padding: clamp(28px, 4vw, 52px); display: flex; flex-direction: column; border-radius: 32px; }
 .about-text .h2 { font-size: clamp(32px, 3.4vw, 46px); }
 .about-text p { color: var(--mut); font-size: 17px; margin-top: 20px; max-width: 580px; }
-.tl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: auto; padding-top: 32px; }
+.tl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: auto; padding-top: 32px; }
 .tl div { background: var(--bg); border-radius: 18px; padding: 16px 18px; }
 .tl b { font-size: 21px; letter-spacing: -.03em; color: var(--ink); display: block; }
 .tl span { font-size: 13px; color: var(--mut); line-height: 1.4; display: block; margin-top: 6px; }
@@ -305,7 +305,7 @@ a:hover .more .icon, .more:hover .icon { transform: translateX(4px); }
 /* Özgeçmiş sayfası */
 .bio { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 20px; align-items: start; }
 .bio-text { display: grid; gap: 16px; min-width: 0; }
-.tl-cards { margin: 0; padding: 0; grid-template-columns: repeat(2, 1fr); }
+.tl-cards { margin: 0; padding: 0; grid-template-columns: repeat(3, 1fr); }
 .tl-cards div { background: var(--card); border: 1px solid var(--line); }
 .works-card { padding: 30px; }
 .works { list-style: none; padding: 0; margin: 14px 0 0; counter-reset: w; }
@@ -433,7 +433,9 @@ a.cc:hover { box-shadow: 0 16px 36px rgba(11, 19, 36, .07); }
   .area-row .num { display: none; }
   .area-row > div { grid-column: 1 / -1; }
   .area-row .arrow-btn { display: none; }
-  .tl { grid-template-columns: 1fr 1fr; }
+  .tl { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tl div { padding: 14px 12px; }
+  .tl b { font-size: 18px; }
   .about-photo { min-height: 340px; border-radius: 24px; }
   .about-text { border-radius: 24px; }
   .books { gap: 12px; }
