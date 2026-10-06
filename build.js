@@ -158,6 +158,8 @@ const ver = f => crypto.createHash('md5').update(fs.readFileSync(path.join(ROOT,
 const CSS_V = ver('assets/css/style.css'), JS_V = ver('assets/js/main.js');
 const hasThemisPhoto = () => fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg'));
 
+const brandInner = () => `<span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="7" r="2.2"/><path d="M24 9.2V40"/><path d="M9 14.5c5 1.6 10 1.6 15 0 5 1.6 10 1.6 15 0"/><path d="M11 15.2 5.5 28M11 15.2 16.5 28M37 15.2 31.5 28M37 15.2 42.5 28"/><path d="M4.5 28c0 3.6 3 6 6.5 6s6.5-2.4 6.5-6z"/><path d="M30.5 28c0 3.6 3 6 6.5 6s6.5-2.4 6.5-6z"/><path d="M17 40.5h14M19.5 43.5h9"/></svg></span><i class="brand-bar" aria-hidden="true"></i><span class="brand-text"><small class="brand-kicker">Avukat</small><span class="brand-name">Yılmaz Çağlayan</span><span class="brand-sub">${esc(site.tagline)}</span></span>`;
+
 function header(current) {
   const links = NAV.map(([href, label]) => {
     const active = current === href || (href !== '/' && current.startsWith(href));
@@ -168,8 +170,7 @@ function header(current) {
   <div class="wrap">
     <div class="nav-pill">
       <a class="brand" href="/" aria-label="${esc(site.name)} – Ana Sayfa">
-        <span class="mono" aria-hidden="true">YÇ</span>
-        <span class="brand-text"><span class="brand-name">${esc(site.name)}</span><span class="brand-sub">${esc(site.tagline)}</span></span>
+        ${brandInner()}
       </a>
       <nav class="nav" id="site-nav" aria-label="Ana menü">${links}<a class="nav-call" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a></nav>
       <a class="nav-cta" href="tel:${site.phoneHref}">${icon('phone')}<span>${esc(site.phone)}</span></a>
@@ -207,7 +208,7 @@ function footer() {
 <footer class="site-footer"><div class="wrap">
   <div class="ft-top">
     <div class="ft-brand">
-      <a class="brand" href="/"><span class="mono" aria-hidden="true">YÇ</span><span class="brand-text"><span class="brand-name">${esc(site.name)}</span><span class="brand-sub">${esc(site.tagline)}</span></span></a>
+      <a class="brand" href="/">${brandInner()}</a>
       <p>Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
     </div>
     <nav class="ft-links" aria-label="Alt menü">${NAV.map(([h, l]) => `<a href="${h}">${NAV_FULL[h] || l}</a>`).join('')}</nav>
@@ -250,7 +251,7 @@ ${site.gscVerification ? `<meta name="google-site-verification" content="${esc(s
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600&display=swap">
 <link rel="stylesheet" href="/assets/css/style.css?v=${CSS_V}">
 ${home ? `<link rel="preload" as="image" href="/assets/img/${hasThemisPhoto() ? 'themis.jpg' : 'themis.svg'}">` : ''}
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
@@ -357,44 +358,33 @@ function themisMedia() {
 // ANA SAYFA
 function home() {
   const body = `
-<section class="hero" data-interval="8000" aria-label="Karşılama">
-  <div class="wrap hero-grid">
-    <div class="hero-left">
-      <div class="hero-stack">
-        <div class="hs is-active" data-slide="0">
-          <span class="tag"><b>Milas</b> Muğla, Bodrum ve çevre adliyeleri</span>
-          <h1 class="hero-title">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <span>asıl olan haklılığı hukukun diliyle anlatabilmektir…</span></h1>
-        </div>
-        <div class="hs" data-slide="1" aria-hidden="true">
-          <span class="tag"><b>Motivasyonumuz</b> Av. Yılmaz Çağlayan</span>
-          <p class="hero-motto">Muğla Milas ve çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, <span>hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemek.</span></p>
-        </div>
+<section class="hero" data-interval="8000" data-tone="dark" aria-label="Karşılama">
+  <div class="hero-bg">
+    <div class="hp is-active" data-slide="0" data-tone="dark"><div class="hp-media">${themisMedia()}</div></div>
+    <div class="hp" data-slide="1" data-tone="light" aria-hidden="true"><div class="hp-media"><img src="/assets/img/yilmaz-caglayan-soft.jpg" alt="Avukat Yılmaz Çağlayan" width="987" height="850" loading="lazy"></div></div>
+  </div>
+  <div class="wrap hero-inner">
+    <div class="hero-stack">
+      <div class="hs is-active" data-slide="0">
+        <span class="tag"><b>Milas</b> Muğla, Bodrum ve çevre adliyeleri</span>
+        <h1 class="hero-title">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <span>asıl olan haklılığı hukukun diliyle anlatabilmektir…</span></h1>
       </div>
-      <p class="lead">Ceza, tazminat, icra, iş, gayrimenkul ve aile hukukunda; ${yearsProsecutor} yılı aşkın Cumhuriyet Savcılığı deneyimiyle hukuki danışmanlık ve dava takibi.</p>
-      <div class="btn-row">
-        <a class="btn btn-gold" href="tel:${site.phoneHref}">Randevu Al ${icon('arrow')}</a>
-        <a class="btn btn-ghost" href="/calisma-alanlari/">Çalışma Alanları</a>
-      </div>
-      <div class="stats">
-        <div><b>${yearsProsecutor}+</b><span>yıl Cumhuriyet Savcılığı</span></div>
-        <div><b>${books.length}</b><span>açıklamalı kanun şerhi</span></div>
-        <div><b>${areas.length}</b><span>çalışma alanı</span></div>
+      <div class="hs" data-slide="1" aria-hidden="true">
+        <span class="tag"><b>Motivasyonumuz</b></span>
+        <p class="hero-motto">Muğla Milas ve çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, <span>hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemek.</span></p>
       </div>
     </div>
-    <div class="hero-photo">
-      <div class="hp is-active" data-slide="0"><div class="hp-media">${themisMedia()}</div></div>
-      <div class="hp" data-slide="1"><div class="hp-media"><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan" width="1170" height="856"></div></div>
-      <span class="badge"><span class="dot"></span>${esc(site.hours.replace('Hafta İçi:', 'Hafta içi'))}</span>
-      <div class="person">
-        <img src="/assets/img/yilmaz-caglayan-600.jpg" alt="" width="600" height="439">
-        <span><b>Av. Yılmaz Çağlayan</b><span>2007–2024 Cumhuriyet Savcısı · 2024'ten beri Milas'ta avukat</span></span>
-      </div>
-      <div class="hero-dots" role="tablist" aria-label="Slaytlar">
-        <button type="button" class="is-active" role="tab" aria-selected="true" aria-label="1. slayt"></button>
-        <button type="button" role="tab" aria-selected="false" aria-label="2. slayt"></button>
-      </div>
+    <div class="btn-row hero-btns">
+      <a class="btn btn-gold" href="tel:${site.phoneHref}">Randevu Al ${icon('arrow')}</a>
+      <a class="btn btn-ghost" href="/calisma-alanlari/">Çalışma Alanları</a>
     </div>
   </div>
+  <div class="hero-dots"><div class="wrap" role="tablist" aria-label="Slaytlar">
+    <span>01</span>
+    <button type="button" class="is-active" role="tab" aria-selected="true" aria-label="1. slayt"></button>
+    <button type="button" role="tab" aria-selected="false" aria-label="2. slayt"></button>
+    <span>02</span>
+  </div></div>
 </section>
 
 <section class="section"><div class="wrap">
@@ -637,7 +627,7 @@ function contactPage() {
   <div class="contact-cards">
     <a class="card cc reveal" href="tel:${site.phoneHref}"><span class="ib">${icon('phone')}</span><small>Telefon</small><b>${esc(site.phone)}</b></a>
     <a class="card cc reveal" href="mailto:${site.email}"><span class="ib">${icon('mail')}</span><small>E-posta</small><b>${esc(site.email)}</b></a>
-    <div class="card cc reveal"><span class="ib">${icon('pin')}</span><small>Adres</small><b>${esc(site.address.street)}<br>${esc(site.address.district)} / ${trUpper(site.address.city)}</b></div>
+    <div class="card cc reveal"><span class="ib">${icon('pin')}</span><small>Adres</small><b>${esc(site.address.street)}<br>${esc(site.address.district)} / ${esc(site.address.city)}</b></div>
     <div class="card cc reveal"><span class="ib">${icon('clock')}</span><small>Çalışma Saatleri</small><b>${esc(site.hours)}</b><span class="sub">${esc(site.hoursNote)}</span></div>
     <div class="btn-row">
       <a class="btn btn-dark" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a>
