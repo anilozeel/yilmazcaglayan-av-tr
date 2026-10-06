@@ -20,6 +20,27 @@ const books = require('./content/eserler.js');
 const faq = require('./content/sss.js');
 const { icon } = require('./content/icons.js');
 
+// İletişim bilgileri yönetim panelinden de güncellenebilir (content/iletisim.json)
+(function applyContact() {
+  let c = null;
+  try { c = JSON.parse(fs.readFileSync(path.join(__dirname, 'content', 'iletisim.json'), 'utf8')); } catch { return; }
+  const str = v => (typeof v === 'string' ? v.trim() : '');
+  if (str(c.street)) site.address.street = str(c.street);
+  if (str(c.district)) site.address.district = str(c.district);
+  if (str(c.city)) site.address.city = str(c.city);
+  site.address.full = `${site.address.street}, ${site.address.district} / ${site.address.city}`;
+  if (str(c.phone)) {
+    site.phone = str(c.phone);
+    const d = site.phone.replace(/\D/g, '');
+    site.phoneHref = d.startsWith('90') ? '+' + d : d.startsWith('0') ? '+9' + d : '+90' + d;
+  }
+  if (str(c.email)) site.email = str(c.email);
+  if (str(c.hours)) site.hours = str(c.hours);
+  if (str(c.hoursNote)) site.hoursNote = str(c.hoursNote);
+  const lat = Number(c.lat), lng = Number(c.lng);
+  site.geo = c.lat !== '' && c.lng !== '' && isFinite(lat) && isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat || lng) ? { lat, lng } : null;
+})();
+
 /* ---------------- yardımcılar ---------------- */
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const trUpper = s => s.toLocaleUpperCase('tr-TR');
@@ -134,7 +155,7 @@ function orgSchema() {
     knowsAbout: areas.map(a => a.title),
     hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Çalışma Alanları', itemListElement: areas.map(a => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: a.title, url: abs(`/calisma-alanlari/${a.slug}/`) } })) }
   };
-  if (site.geo) o.geo = { '@type': 'GeoCoordinates', latitude: site.geo.lat, longitude: site.geo.lng };
+  if (site.geo) { o.geo = { '@type': 'GeoCoordinates', latitude: site.geo.lat, longitude: site.geo.lng }; o.hasMap = `https://www.google.com/maps?q=${site.geo.lat},${site.geo.lng}`; }
   return o;
 }
 function personSchema() {
@@ -155,10 +176,10 @@ const ld = graph => `<script type="application/ld+json">${JSON.stringify({ '@con
 const NAV = [
   ['/', 'Ana Sayfa'],
   ['/calisma-alanlari/', 'Çalışma Alanları'],
-  ['/yayimlanmis-eserler/', 'Eserler'],
+  ['/yayimlanmis-eserler/', 'Yayımlanmış Eserler'],
   ['/hakkimda/', 'Özgeçmiş'],
   ['/makaleler/', 'Makaleler'],
-  ['/sikca-sorulan-sorular/', 'S.S.S.'],
+  ['/sikca-sorulan-sorular/', 'Sıkça Sorulan Sorular'],
   ['/iletisim/', 'İletişim']
 ];
 const NAV_FULL = { '/yayimlanmis-eserler/': 'Yayımlanmış Eserler ve Kitaplar', '/sikca-sorulan-sorular/': 'Sıkça Sorulan Sorular', '/iletisim/': 'İletişim Bilgileri' };
@@ -225,7 +246,7 @@ function footer() {
       <p>${esc(site.slogan)}. Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
     </div>
     <nav class="ft-links" aria-label="Alt menü">${NAV.map(([h, l]) => `<a href="${h}">${NAV_FULL[h] || l}</a>`).join('')}</nav>
-    <nav class="ft-links" aria-label="Çalışma alanları">${areas.slice(0, 7).map(a => `<a href="/calisma-alanlari/${a.slug}/">${esc(shortTitle(a.title))}</a>`).join('')}</nav>
+    <nav class="ft-links" aria-label="Çalışma alanları">${areas.map(a => `<a href="/calisma-alanlari/${a.slug}/">${esc(a.footerLabel || a.title)}</a>`).join('')}</nav>
   </div>
   <div class="ft-bottom">
     <span>© ${new Date().getFullYear()} ${esc(site.siteTitle)}</span>
@@ -295,7 +316,7 @@ function pageHero({ title, lead, crumbs, eyebrow }) {
 </div></section>`;
 }
 
-const sectionHead = (eyebrow, title, text, tag = 'h2') => `<div class="sh reveal"><div><span class="eyebrow">${esc(eyebrow)}</span><${tag} class="h2">${esc(title)}</${tag}></div>${text ? `<p>${esc(text)}</p>` : ''}</div>`;
+const sectionHead = (eyebrow, title, text, tag = 'h2') => `<div class="sh reveal"><div>${eyebrow ? `<span class="eyebrow">${esc(eyebrow)}</span>` : ''}<${tag} class="h2">${esc(title)}</${tag}></div>${text ? `<p>${esc(text)}</p>` : ''}</div>`;
 
 function areaCard(a, extra = '') {
   return `<a class="card area-card reveal${extra}" href="/calisma-alanlari/${a.slug}/">
@@ -307,18 +328,10 @@ function areaCard(a, extra = '') {
 }
 
 function bento() {
-  const big = areas[0];
-  const rest = areas.slice(1);
-  const pick = [rest[0], rest[1], rest[2], rest[4], rest[6], rest[7], rest[8]]; // borçlar, icra, iş, gayrimenkul, miras, aile, otelcilik
-  const others = rest.filter(a => !pick.includes(a));
+  const bySlug = s => areas.find(a => a.slug === s);
+  const pick = ['ceza-hukuku', 'borclar-hukuku-ve-tazminat', 'icra-iflas-hukuku', 'is-hukuku', 'gayrimenkul-ve-imar-hukuku', 'miras-hukuku', 'aile-hukuku-ve-bosanma', 'otelcilik-hukuku'].map(bySlug).filter(Boolean);
+  const others = areas.filter(a => !pick.includes(a));
   return `<div class="bento">
-  <a class="card area-big reveal" href="/calisma-alanlari/${big.slug}/">
-    <span class="ib">${icon(big.icon)}</span>
-    <h3>${esc(big.title)}</h3>
-    <p>Kolluk ve savcılık ifadelerinden Ağır Ceza yargılamasına, tutukluluğa itirazdan Yargıtay temyizine kadar savunmanın her aşaması.</p>
-    <span class="pills"><span>İfade ve sorgu</span><span>Tutukluluğa itiraz</span><span>İstinaf · Temyiz</span><span>Bilişim suçları</span></span>
-    <span class="more">Detaylı bilgi ${icon('arrow')}</span>
-  </a>
   ${pick.map(a => areaCard(a)).join('')}
   <a class="card area-gold reveal" href="/calisma-alanlari/">
     <span class="ib">${icon('plus')}</span>
@@ -384,15 +397,14 @@ function home() {
       <div class="hs is-active" data-slide="0">
         <h1 class="tag hero-h1"><b>Av. Yılmaz Çağlayan</b> Milas Avukat &amp; Hukuk Bürosu</h1>
         <p class="hero-title">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <span>asıl olan haklılığı hukukun diliyle anlatabilmektir…</span></p>
+        <div class="btn-row hero-btns">
+          <a class="btn btn-gold" href="tel:${site.phoneHref}">Randevu Al ${icon('arrow')}</a>
+          <a class="btn btn-ghost" href="/calisma-alanlari/">Çalışma Alanları</a>
+        </div>
       </div>
-      <div class="hs" data-slide="1" aria-hidden="true">
-        <span class="tag"><b>Motivasyonumuz</b></span>
-        <p class="hero-motto">Muğla Milas ve çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, <span>hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemek.</span></p>
+      <div class="hs hs-mission" data-slide="1" aria-hidden="true">
+        <p class="hero-motto"><b>Misyonumuz;</b> Muğla ve Milas çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemek.</p>
       </div>
-    </div>
-    <div class="btn-row hero-btns">
-      <a class="btn btn-gold" href="tel:${site.phoneHref}">Randevu Al ${icon('arrow')}</a>
-      <a class="btn btn-ghost" href="/calisma-alanlari/">Çalışma Alanları</a>
     </div>
   </div>
   <div class="hero-dots"><div class="wrap" role="tablist" aria-label="Slaytlar">
@@ -404,7 +416,7 @@ function home() {
 </section>
 
 <section class="section"><div class="wrap">
-  ${sectionHead('Çalışma Alanlarımız', 'Hukukun her aşamasında yanınızdayız.', `${site.slogan}: soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar bireylere ve kurumlara hukuki destek.`)}
+  ${sectionHead('', 'Hukukun her aşamasında yanınızdayız.', `${site.slogan}: soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar bireylere ve kurumlara hukuki destek.`)}
   ${bento()}
   <p class="note reveal">Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
 </div></section>
@@ -518,17 +530,18 @@ function aboutPage() {
   const crumbs = [['Ana Sayfa', '/'], ['Özgeçmiş', '/hakkimda/']];
   const body = `${pageHero({ title: 'Avukat Yılmaz ÇAĞLAYAN', eyebrow: 'Özgeçmiş', lead: 'Dört açıklamalı ve içtihatlı kanun şerhinin yazarı; Muğla Milas\'ta serbest avukat.', crumbs })}
 <section class="section"><div class="wrap bio">
-  <div class="bio-text">
-    <div class="card prose-card reveal">
-      <div class="prose">
+  <figure class="bio-photo reveal"><img src="/assets/img/yilmaz-caglayan-ozgecmis.jpg" alt="Avukat Yılmaz Çağlayan" width="790" height="856" fetchpriority="high"></figure>
+  <div class="card prose-card bio-card reveal">
+    <h2 class="h2 bio-title">Özgeçmiş</h2>
+    <div class="prose">
         <p>1979 yılında İstanbul'da doğdu. Aslen Sinop, Gerzelidir. İlk ve orta öğrenimini İstanbul'da tamamladı. 1996 yılında Ankara'da Adalet Bakanlığı bünyesinde adliye personeli yetiştirmek amacıyla eğitim veren liseden mezun olduktan sonra, 1996 yılında İstanbul Üniversitesi Hukuk Fakültesi'ni kazandı. Üniversite öğrenciliği yıllarında hukuk eğitimiyle birlikte İstanbul'da adliyede devlet memuru olarak görev yaptı.</p>
         <p>Hukuk fakültesinden mezuniyetinin ardından bir süre avukatlık stajı yaptı ve 2005 yılında Cumhuriyet Savcılığı stajına başladı. 2007–2024 yılları arasında sırasıyla Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı. Askerlik hizmetini ise Eskişehir'de askerî hâkim olarak yerine getirdi.</p>
         <p>Mesleki pratik ve yargı uygulamalarından edindiği tecrübeleri akademik alana da aktardı. Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
         <p>2024 yılında Cumhuriyet Savcılığından emekli olarak serbest avukatlık yapmaya başladı. Halen hukuk mesleğindeki bilgi ve deneyimini avukat olarak Muğla Milas ilçesinde sürdürmektedir.</p>
         <p>Evli ve iki çocuk babasıdır.</p>
       </div>
-    </div>
-    <div class="tl tl-cards reveal">
+  </div>
+  <div class="tl tl-cards reveal">
       <div><b>1996</b><span>İstanbul Üniversitesi Hukuk Fakültesi</span></div>
       <div><b>2005</b><span>Cumhuriyet Savcılığı stajı</span></div>
       <div><b>2007–2024</b><span>Cumhuriyet Savcısı · Bartın, Ardahan, Manisa, Adana, Bolu</span></div>
@@ -538,11 +551,6 @@ function aboutPage() {
       <h2 class="h3">Akademik Eserler</h2>
       <ol class="works">${books.map(b => `<li><a href="/yayimlanmis-eserler/#${b.slug}">${esc(b.title)}</a></li>`).join('')}</ol>
     </div>
-  </div>
-  <aside class="bio-photo reveal">
-    <figure><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan" width="1170" height="856">
-      <figcaption><b>Av. Yılmaz Çağlayan</b><span>Milas · Muğla</span></figcaption></figure>
-  </aside>
 </div></section>`;
   write('hakkimda/index.html', layout({
     path: '/hakkimda/', title: 'Özgeçmiş | Avukat Yılmaz Çağlayan – Milas',
@@ -638,7 +646,7 @@ function faqPage() {
 // İLETİŞİM
 function contactPage() {
   const crumbs = [['Ana Sayfa', '/'], ['İletişim', '/iletisim/']];
-  const q = encodeURIComponent(site.address.full.replace(' / ', ' '));
+  const q = site.geo ? `${site.geo.lat},${site.geo.lng}` : encodeURIComponent(site.address.full.replace(' / ', ' '));
   const body = `${pageHero({ title: 'İletişim Bilgileri', eyebrow: 'Randevu', lead: 'Hukuki danışmanlık randevuları ve yasal süreçlerle ilgili bilgilendirmeler için aşağıdaki kanallar üzerinden iletişim sağlayabilirsiniz.', crumbs })}
 <section class="section"><div class="wrap contact-grid">
   <div class="contact-cards">
@@ -652,12 +660,12 @@ function contactPage() {
     </div>
   </div>
   <div class="map reveal">
-    <iframe title="Büro konumu – Google Haritalar" src="https://www.google.com/maps?q=${q}&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+    <iframe title="Büro konumu – Google Haritalar" src="https://www.google.com/maps?q=${q}&amp;z=17&amp;hl=tr&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
   </div>
 </div></section>`;
   write('iletisim/index.html', layout({
     path: '/iletisim/', title: 'İletişim | Avukat Yılmaz Çağlayan – Milas, Muğla',
-    description: `Av. Yılmaz Çağlayan, Milas avukatlık bürosu: ${site.phone} · Hermiyas Cd. No: 17, Milas / Muğla. Hafta içi 09:00–18:00, randevulu kabul.`,
+    description: `Av. Yılmaz Çağlayan, Milas avukatlık bürosu: ${site.phone} · ${site.address.full}. ${site.hours.replace('Hafta İçi:', 'Hafta içi')}, randevulu kabul.`,
     body,
     schema: [crumbsSchema(crumbs), { '@type': 'ContactPage', url: abs('/iletisim/'), about: { '@id': ORG_ID } }]
   }));
@@ -691,7 +699,8 @@ function panelPage() {
   const PV = ver('assets/panel/panel.css') + ver('assets/panel/panel.js');
   const cfg = {
     repo: site.repo, areas: areas.map(a => ({ slug: a.slug, title: a.title })),
-    umamiWebsiteId: UMAMI_ID, siteUrl: site.url, phone: site.phone
+    umamiWebsiteId: UMAMI_ID, siteUrl: site.url, phone: site.phone,
+    contact: { street: site.address.street, district: site.address.district, city: site.address.city, phone: site.phone, email: site.email, hours: site.hours, hoursNote: site.hoursNote, lat: site.geo ? site.geo.lat : '', lng: site.geo ? site.geo.lng : '' }
   };
   write('yonetim/index.html', `<!doctype html>
 <html lang="tr">
