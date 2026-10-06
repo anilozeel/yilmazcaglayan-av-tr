@@ -3,7 +3,10 @@ module.exports = {
   url: 'https://yilmazcaglayan.av.tr',
   name: 'Avukat Yılmaz ÇAĞLAYAN',
   shortName: 'Av. Yılmaz Çağlayan',
-  tagline: 'Muğla Milas Avukatlık Bürosu',
+  // Sitenin ana başlığı (ana sayfa <title>) ve Google'da görünen alt mesaj
+  siteTitle: 'Av. Yılmaz Çağlayan | Milas Avukat & Hukuk Bürosu',
+  slogan: "Milas ve Muğla'da Hukuki Danışmanlık ve Avukatlık Hizmetleri",
+  tagline: 'Milas Avukat & Hukuk Bürosu',
   lang: 'tr',
   phone: '+90 505 792 13 14',
   phoneHref: '+905057921314',
@@ -24,5 +27,8 @@ module.exports = {
   // Google Analytics 4 ölçüm kimliği (ör. 'G-XXXXXXXXXX'). Boş bırakılırsa kod eklenmez.
   gaId: '',
   // Google Search Console HTML etiketi doğrulama kodu (content değeri). Boş bırakılırsa eklenmez.
-  gscVerification: ''
+  gscVerification: '',
+
+  // Yönetim paneli: makalelerin kaydedildiği GitHub deposu
+  repo: { owner: 'anilozeel', name: 'yilmazcaglayan-av-tr', branch: 'main' }
 };
