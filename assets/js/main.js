@@ -20,33 +20,41 @@
     toggle.addEventListener('click', function () {
       var open = nav.classList.toggle('is-open');
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      d.body.style.overflow = open ? 'hidden' : '';
     });
   }
 
-  // Ana sayfa slider: kendiliğinden ilerler
+  // Ana sayfa slider: metin ve görsel birlikte, kendiliğinden ilerler
   var hero = d.querySelector('.hero');
   if (hero) {
-    var slides = hero.querySelectorAll('.slide');
+    var texts = hero.querySelectorAll('.hs');
+    var photos = hero.querySelectorAll('.hp');
     var dots = hero.querySelectorAll('.hero-dots button');
+    var count = Math.max(texts.length, photos.length);
     var ms = parseInt(hero.getAttribute('data-interval'), 10) || 8000;
     hero.style.setProperty('--slide-ms', ms + 'ms');
     var i = 0, timer;
-    function show(n) {
-      slides[i].classList.remove('is-active');
-      if (dots[i]) { dots[i].classList.remove('is-active'); dots[i].setAttribute('aria-selected', 'false'); }
-      i = (n + slides.length) % slides.length;
-      // animasyonları yeniden başlat
-      var media = slides[i].querySelector('.slide-media');
-      if (media) { media.style.animation = 'none'; void media.offsetWidth; media.style.animation = ''; }
-      slides[i].classList.add('is-active');
-      if (dots[i]) { void dots[i].offsetWidth; dots[i].classList.add('is-active'); dots[i].setAttribute('aria-selected', 'true'); }
+    function setActive(list, n) {
+      list.forEach(function (el, k) {
+        var on = k === n;
+        el.classList.toggle('is-active', on);
+        el.setAttribute('aria-hidden', on ? 'false' : 'true');
+      });
     }
-    function start() { stop(); timer = setInterval(function () { show(i + 1); }, ms); }
+    function show(n) {
+      i = (n + count) % count;
+      var media = photos[i] && photos[i].querySelector('.hp-media');
+      if (media) { media.style.animation = 'none'; void media.offsetWidth; media.style.animation = ''; }
+      setActive(texts, i); setActive(photos, i);
+      dots.forEach(function (b, k) {
+        b.classList.remove('is-active'); b.setAttribute('aria-selected', k === i ? 'true' : 'false');
+        if (k === i) { void b.offsetWidth; b.classList.add('is-active'); }
+      });
+    }
     function stop() { if (timer) clearInterval(timer); }
+    function start() { stop(); timer = setInterval(function () { show(i + 1); }, ms); }
     dots.forEach(function (b, k) { b.addEventListener('click', function () { show(k); start(); }); });
     d.addEventListener('visibilitychange', function () { d.hidden ? stop() : start(); });
-    if (slides.length > 1) start();
+    if (count > 1) start();
   }
 
   // Kitap kapağı büyütme (lightbox)
