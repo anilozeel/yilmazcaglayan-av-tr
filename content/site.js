@@ -3,7 +3,7 @@ module.exports = {
   url: 'https://yilmazcaglayan.av.tr',
   name: 'Avukat Yılmaz ÇAĞLAYAN',
   shortName: 'Av. Yılmaz Çağlayan',
-  tagline: 'MUĞLA Milas Avukatlık Bürosu',
+  tagline: 'Muğla Milas Avukatlık Bürosu',
   lang: 'tr',
   phone: '+90 505 792 13 14',
   phoneHref: '+905057921314',
@@ -13,7 +13,7 @@ module.exports = {
     district: 'Milas',
     city: 'Muğla',
     country: 'TR',
-    full: 'Güllük Mahallesi Hermiyas Cd. No: 17 K: 2 N: 1, Milas / MUĞLA'
+    full: 'Güllük Mahallesi Hermiyas Cd. No: 17 K: 2 N: 1, Milas / Muğla'
   },
   // Google Haritalar'dan alınan koordinatlar girilirse yapılandırılmış veriye eklenir. Ör: { lat: 37.31, lng: 27.78 }
   geo: null,
