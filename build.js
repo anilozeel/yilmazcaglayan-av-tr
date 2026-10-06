@@ -153,6 +153,9 @@ const NAV = [
 const NAV_FULL = { '/yayimlanmis-eserler/': 'Yayımlanmış Eserler ve Kitaplar', '/sikca-sorulan-sorular/': 'Sıkça Sorulan Sorular', '/iletisim/': 'İletişim Bilgileri' };
 const yearsProsecutor = 2024 - 2007;
 const shortTitle = t => t.replace(/ Avukatlığı$/, '');
+const crypto = require('crypto');
+const ver = f => crypto.createHash('md5').update(fs.readFileSync(path.join(ROOT, f))).digest('hex').slice(0, 8);
+const CSS_V = ver('assets/css/style.css'), JS_V = ver('assets/js/main.js');
 const hasThemisPhoto = () => fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg'));
 
 function header(current) {
@@ -248,7 +251,7 @@ ${site.gscVerification ? `<meta name="google-site-verification" content="${esc(s
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/style.css?v=${CSS_V}">
 ${home ? `<link rel="preload" as="image" href="/assets/img/${hasThemisPhoto() ? 'themis.jpg' : 'themis.svg'}">` : ''}
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 ${ld([orgSchema(), ...schema])}${ga}
@@ -261,7 +264,7 @@ ${body}
 ${contactBand()}
 </main>
 ${footer()}
-<script src="/assets/js/main.js" defer></script>
+<script src="/assets/js/main.js?v=${JS_V}" defer></script>
 </body>
 </html>
 `;
