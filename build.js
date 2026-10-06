@@ -11,7 +11,7 @@ const path = require('path');
 
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
 const ROOT = __dirname;
-const OUT = path.join(ROOT, args.out || 'dist');
+const OUT = path.resolve(ROOT, args.out || 'dist');
 // (tema seçimi kaldırıldı — tek tasarım: modern)
 
 const site = require('./content/site.js');
@@ -66,6 +66,8 @@ function md(src) {
     if (!l) { flushP(); flushL(); continue; }
     if (l.startsWith('## ')) { flushP(); flushL(); const t = l.slice(3); html += `<h2 id="${slugify(t)}">${inline(t)}</h2>\n`; continue; }
     if (l.startsWith('> ')) { flushP(); flushL(); html += `<blockquote><p>${inline(l.slice(2))}</p></blockquote>\n`; continue; }
+    const im = l.match(/^!\[([^\]]*)\]\((\/[^)\s]+|https:\/\/[^)\s]+)\)$/);
+    if (im) { flushP(); flushL(); html += `<figure class="md-img"><img src="${esc(im[2])}" alt="${esc(im[1])}" loading="lazy">${im[1] ? `<figcaption>${esc(im[1])}</figcaption>` : ''}</figure>\n`; continue; }
     if (/^[*-] /.test(l)) { flushP(); list.push(l.slice(2)); continue; }
     flushL(); para.push(l);
   }
@@ -85,16 +87,23 @@ function frontMatter(src) {
 
 /* ---------------- makaleler ---------------- */
 const ART_DIR = path.join(ROOT, 'content', 'makaleler');
+const seenSlugs = new Set();
 const articles = fs.readdirSync(ART_DIR).filter(f => f.endsWith('.md')).sort().map(f => {
-  const { data, body } = frontMatter(fs.readFileSync(path.join(ART_DIR, f), 'utf8'));
-  const slug = data.slug || slugify(f.replace(/\.md$/, '').replace(/^\d+-/, ''));
-  const text = body.replace(/[#>*\[\]()]/g, '');
-  const words = text.split(/\s+/).filter(Boolean).length;
-  const firstPara = body.split('\n\n').map(s => s.trim()).find(s => s && !s.startsWith('#')) || '';
+  const { data, body } = frontMatter(fs.readFileSync(path.join(ART_DIR, f), 'utf8').replace(/^\uFEFF/, '').replace(/\r/g, ''));
+  let slug = slugify(data.slug || f.replace(/\.md$/, '').replace(/^\d+-/, '')) || 'makale';
+  while (seenSlugs.has(slug)) slug += '-2';
+  seenSlugs.add(slug);
+  const plain = body.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*]/g, '');
+  const words = plain.split(/\s+/).filter(Boolean).length;
+  const firstPara = (plain.split('\n\n').map(s => s.trim().replace(/\s+/g, ' ')).find(s => s && !/^[-*] /.test(s)) || '');
+  const area = areaBySlug[data.area] ? data.area : 'hukuki-danismanlik';
+  const image = /^\/assets\/[\w\-./]+\.(jpe?g|png|webp)$/i.test(data.image || '') && fs.existsSync(path.join(ROOT, data.image)) ? data.image : '';
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, t.lastIndexOf(' ', n - 1) > 60 ? t.lastIndexOf(' ', n - 1) : n - 1).replace(/[,;:]$/, '') + '…';
   return {
-    file: f, slug, title: data.title, date: data.date || BUILD_DATE, area: data.area, related: (data.related || '').split(',').map(s => s.trim()).filter(Boolean),
-    description: data.description || firstPara.slice(0, 155),
-    excerpt: firstPara.replace(/\*\*/g, '').split(/(?<=\.)\s/).slice(0, 2).join(' '),
+    file: f, slug, title: data.title || slug, date: /^\d{4}-\d{2}-\d{2}$/.test(data.date || '') ? data.date : BUILD_DATE, area,
+    related: (data.related || '').split(',').map(s => s.trim()).filter(r => areaBySlug[r] && r !== area),
+    description: data.description || cut(firstPara, 155), image,
+    excerpt: cut(firstPara.split(/(?<=\.)\s/).slice(0, 2).join(' '), 420),
     html: md(body), minutes: Math.max(2, Math.round(words / 200)), url: `/makaleler/${slug}/`
   };
 }).sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : a.file.localeCompare(b.file)));
@@ -108,8 +117,10 @@ function orgSchema() {
   const o = {
     '@type': ['LegalService', 'Attorney'],
     '@id': ORG_ID,
-    name: `${site.name} – ${site.tagline}`,
-    alternateName: 'Av. Yılmaz Çağlayan Hukuk Bürosu',
+    name: 'Av. Yılmaz Çağlayan Hukuk Bürosu',
+    alternateName: [site.siteTitle, 'Milas Avukat Yılmaz Çağlayan', 'Avukat Yılmaz Çağlayan'],
+    slogan: site.slogan,
+    description: `${site.slogan}. Ceza, tazminat, icra, iş, ticaret, gayrimenkul, idare, miras ve aile hukuku.`,
     url: abs('/'),
     image: abs('/assets/img/yilmaz-caglayan.jpg'),
     logo: abs('/assets/img/og-image.jpg'),
@@ -155,6 +166,9 @@ const shortTitle = t => t.replace(/ Avukatlığı$/, '');
 const crypto = require('crypto');
 const ver = f => crypto.createHash('md5').update(fs.readFileSync(path.join(ROOT, f))).digest('hex').slice(0, 8);
 const CSS_V = ver('assets/css/style.css'), JS_V = ver('assets/js/main.js');
+const readJson = (rel, def) => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8')); } catch { return def; } };
+const analytics = readJson('content/analitik.json', {});
+const UMAMI_ID = /^[0-9a-f-]{36}$/i.test(analytics.umamiWebsiteId || '') ? analytics.umamiWebsiteId : '';
 const hasThemisPhoto = () => fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg'));
 
 const brandInner = () => `<span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="7" r="2.2"/><path d="M24 9.2V40"/><path d="M9 14.5c5 1.6 10 1.6 15 0 5 1.6 10 1.6 15 0"/><path d="M11 15.2 5.5 28M11 15.2 16.5 28M37 15.2 31.5 28M37 15.2 42.5 28"/><path d="M4.5 28c0 3.6 3 6 6.5 6s6.5-2.4 6.5-6z"/><path d="M30.5 28c0 3.6 3 6 6.5 6s6.5-2.4 6.5-6z"/><path d="M17 40.5h14M19.5 43.5h9"/></svg></span><i class="brand-bar" aria-hidden="true"></i><span class="brand-text"><small class="brand-kicker">Avukat</small><span class="brand-name">Yılmaz Çağlayan</span><span class="brand-sub">${esc(site.tagline)}</span></span>`;
@@ -208,13 +222,13 @@ function footer() {
   <div class="ft-top">
     <div class="ft-brand">
       <a class="brand" href="/">${brandInner()}</a>
-      <p>Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
+      <p>${esc(site.slogan)}. Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
     </div>
     <nav class="ft-links" aria-label="Alt menü">${NAV.map(([h, l]) => `<a href="${h}">${NAV_FULL[h] || l}</a>`).join('')}</nav>
     <nav class="ft-links" aria-label="Çalışma alanları">${areas.slice(0, 7).map(a => `<a href="/calisma-alanlari/${a.slug}/">${esc(shortTitle(a.title))}</a>`).join('')}</nav>
   </div>
   <div class="ft-bottom">
-    <span>© ${new Date().getFullYear()} ${esc(site.name)} · ${esc(site.tagline)}</span>
+    <span>© ${new Date().getFullYear()} ${esc(site.siteTitle)}</span>
     <span>İçerikler genel bilgilendirme amaçlıdır; hukuki tavsiye niteliği taşımaz.</span>
   </div>
 </div></footer>
@@ -223,6 +237,8 @@ function footer() {
 
 function layout({ path: p, title, description, body, schema = [], ogType = 'website', image = '/assets/img/og-image.jpg', home = false, noindex = false }) {
   const canonical = abs(p);
+  if (title.length > 65) title = title.replace(/ \| Av\. Yılmaz Çağlayan$/, '');
+  if (description.length > 165) description = description.slice(0, description.lastIndexOf(' ', 160)).replace(/[,;:.]$/, '') + '…';
   const ga = site.gaId ? `
 <script async src="https://www.googletagmanager.com/gtag/js?id=${site.gaId}"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${site.gaId}',{anonymize_ip:true});</script>` : '';
@@ -241,7 +257,7 @@ ${site.gscVerification ? `<meta name="google-site-verification" content="${esc(s
 <meta name="geo.placename" content="Milas, Muğla">
 <meta property="og:locale" content="tr_TR">
 <meta property="og:type" content="${ogType}">
-<meta property="og:site_name" content="${esc(site.name)}">
+<meta property="og:site_name" content="${esc(site.siteTitle)}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${canonical}">
@@ -252,9 +268,9 @@ ${site.gscVerification ? `<meta name="google-site-verification" content="${esc(s
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600&display=swap">
 <link rel="stylesheet" href="/assets/css/style.css?v=${CSS_V}">
-${home ? `<link rel="preload" as="image" href="/assets/img/${hasThemisPhoto() ? 'themis.jpg' : 'themis.svg'}">` : ''}
+${home ? (hasThemisPhoto() ? `<link rel="preload" as="image" href="/assets/img/themis.jpg" media="(min-width: 681px)" fetchpriority="high">\n<link rel="preload" as="image" href="/assets/img/themis-mobile.jpg" media="(max-width: 680px)" fetchpriority="high">` : '<link rel="preload" as="image" href="/assets/img/themis.svg">') : ''}
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
-${ld([orgSchema(), ...schema])}${ga}
+${ld([orgSchema(), ...schema])}${ga}${UMAMI_ID ? `\n<script defer src="https://cloud.umami.is/script.js" data-website-id="${UMAMI_ID}"></script>` : ''}
 </head>
 <body>
 <a class="skip" href="#icerik">İçeriğe geç</a>
@@ -338,7 +354,8 @@ function bookGrid(withText = true) {
 }
 
 function postCard(a, dark = false) {
-  return `<article class="card post${dark ? ' dark' : ''} reveal">
+  return `<article class="card post${dark ? ' dark' : ''}${a.image ? ' has-thumb' : ''} reveal">
+    ${a.image ? `<a class="post-thumb" href="${a.url}" tabindex="-1" aria-hidden="true"><img src="${a.image}" alt="" loading="lazy"></a>` : ''}
     <a class="chip" href="/calisma-alanlari/${a.area}/">${esc(shortTitle(areaBySlug[a.area]?.title || 'Makale'))}</a>
     <h3><a href="${a.url}">${esc(a.title)}</a></h3>
     <p>${esc(a.excerpt)}</p>
@@ -365,8 +382,8 @@ function home() {
   <div class="wrap hero-inner">
     <div class="hero-stack">
       <div class="hs is-active" data-slide="0">
-        <span class="tag"><b>Milas</b> Muğla, Bodrum ve çevre adliyeleri</span>
-        <h1 class="hero-title">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <span>asıl olan haklılığı hukukun diliyle anlatabilmektir…</span></h1>
+        <h1 class="tag hero-h1"><b>Av. Yılmaz Çağlayan</b> Milas Avukat &amp; Hukuk Bürosu</h1>
+        <p class="hero-title">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <span>asıl olan haklılığı hukukun diliyle anlatabilmektir…</span></p>
       </div>
       <div class="hs" data-slide="1" aria-hidden="true">
         <span class="tag"><b>Motivasyonumuz</b></span>
@@ -387,7 +404,7 @@ function home() {
 </section>
 
 <section class="section"><div class="wrap">
-  ${sectionHead('Çalışma Alanlarımız', 'Hukukun her aşamasında yanınızdayız.', 'Soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar bireylere ve kurumlara hukuki destek.')}
+  ${sectionHead('Çalışma Alanlarımız', 'Hukukun her aşamasında yanınızdayız.', `${site.slogan}: soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar bireylere ve kurumlara hukuki destek.`)}
   ${bento()}
   <p class="note reveal">Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
 </div></section>
@@ -415,10 +432,10 @@ function home() {
 </div></section>`;
   write('index.html', layout({
     path: '/', home: true,
-    title: 'Avukat Yılmaz Çağlayan | Milas Avukat – Muğla Milas Avukatlık Bürosu',
-    description: "Milas avukatı Yılmaz Çağlayan: ceza, tazminat, icra, iş, gayrimenkul, miras ve aile hukuku. Muğla, Milas ve Bodrum'da dava takibi ve hukuki danışmanlık.",
+    title: site.siteTitle,
+    description: `${site.slogan}. Ceza, tazminat, icra, iş, gayrimenkul, miras ve aile hukukunda dava takibi ve danışmanlık.`,
     body,
-    schema: [{ '@type': 'WebSite', '@id': abs('/#site'), url: abs('/'), name: site.name, inLanguage: 'tr-TR', publisher: { '@id': ORG_ID } }, personSchema()]
+    schema: [{ '@type': 'WebSite', '@id': abs('/#site'), url: abs('/'), name: site.siteTitle, alternateName: 'Av. Yılmaz Çağlayan', description: site.slogan, inLanguage: 'tr-TR', publisher: { '@id': ORG_ID } }, personSchema()]
   }));
 }
 
@@ -560,6 +577,7 @@ function articlesPages() {
 <section class="section"><div class="wrap detail">
   <article class="detail-main">
     <div class="card prose-card article-card reveal">
+      ${a.image ? `<figure class="article-cover"><img src="${a.image}" alt="${esc(a.title)}" fetchpriority="high"></figure>` : ''}
       <div class="post-meta">${area ? `<a href="/calisma-alanlari/${area.slug}/">${esc(area.title)}</a> · ` : ''}${a.minutes} dk okuma · <time datetime="${a.date}">${fmtDate(a.date)}</time></div>
       <div class="prose">${a.html}</div>
       <p class="legal-note">Bu makale genel bilgilendirme amacıyla hazırlanmış olup hukuki tavsiye niteliği taşımaz. Somut uyuşmazlıklar, yasal mevzuat ve süreler dikkate alınarak bir hukuk profesyoneli eşliğinde değerlendirilmelidir.</p>
@@ -582,11 +600,11 @@ function articlesPages() {
   <div class="posts posts-home">${more.map(m => postCard(m)).join('')}</div>
 </div></section>`;
     write(`makaleler/${a.slug}/index.html`, layout({
-      path: a.url, title: `${a.title} | Av. Yılmaz Çağlayan`, description: a.description, body, ogType: 'article',
+      path: a.url, title: `${a.title} | Av. Yılmaz Çağlayan`, description: a.description, body, ogType: 'article', image: a.image || undefined,
       schema: [crumbsSchema(c), {
         '@type': 'Article', headline: a.title.slice(0, 110), description: a.description, datePublished: a.date, dateModified: a.date,
         inLanguage: 'tr-TR', mainEntityOfPage: abs(a.url), author: { '@id': PERSON_ID }, publisher: { '@id': ORG_ID },
-        image: abs('/assets/img/og-image.jpg'), about: area ? area.title : undefined
+        image: abs(a.image || '/assets/img/og-image.jpg'), about: area ? area.title : undefined
       }]
     }));
   }
@@ -664,13 +682,47 @@ function sitemapAndRobots() {
 ${urls.map(([u, p, f, d]) => `  <url><loc>${abs(u)}</loc><lastmod>${d || BUILD_DATE}</lastmod><changefreq>${f}</changefreq><priority>${p}</priority></url>`).join('\n')}
 </urlset>
 `);
-  write('robots.txt', PREVIEW ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${abs('/sitemap.xml')}\n`);
+  write('robots.txt', PREVIEW ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nDisallow: /yonetim/\n\nSitemap: ${abs('/sitemap.xml')}\n`);
   if (PREVIEW) write('.nojekyll', '');
+}
+
+// YÖNETİM PANELİ
+function panelPage() {
+  const PV = ver('assets/panel/panel.css') + ver('assets/panel/panel.js');
+  const cfg = {
+    repo: site.repo, areas: areas.map(a => ({ slug: a.slug, title: a.title })),
+    umamiWebsiteId: UMAMI_ID, siteUrl: site.url, phone: site.phone
+  };
+  write('yonetim/index.html', `<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yönetim Paneli | Av. Yılmaz Çağlayan</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B1324">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@600&display=swap">
+<link rel="stylesheet" href="/assets/panel/panel.css?v=${PV}">
+</head>
+<body>
+<div id="app" aria-live="polite"><div class="boot">Yükleniyor…</div></div>
+<noscript><p class="boot">Yönetim panelini kullanmak için tarayıcınızda JavaScript açık olmalıdır.</p></noscript>
+<script id="panel-config" type="application/json">${JSON.stringify(cfg).replace(/</g, '\\u003c')}</script>
+<script src="/assets/panel/panel.js?v=${PV}" defer></script>
+</body>
+</html>
+`);
+  write('yonetim/makaleler.json', JSON.stringify(articles.map(a => ({ file: a.file, slug: a.slug, title: a.title, date: a.date, area: a.area, image: a.image }))));
+  const vault = path.join(ROOT, 'content', 'panel.json');
+  if (fs.existsSync(vault)) fs.copyFileSync(vault, path.join(OUT, 'yonetim', 'panel.json'));
 }
 
 /* ---------------- çalıştır ---------------- */
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 copyDir(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), f => f.startsWith('src-') || f === '.DS_Store');
-home(); areasPage(); booksPage(); aboutPage(); articlesPages(); faqPage(); contactPage(); notFound(); sitemapAndRobots();
+home(); areasPage(); booksPage(); aboutPage(); articlesPages(); faqPage(); contactPage(); notFound(); sitemapAndRobots(); panelPage();
 console.log(`✓ ${OUT} üretildi${BASE ? ' (önizleme, taban: ' + BASE + ')' : ''} · ${areas.length} alan · ${articles.length} makale`);

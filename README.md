@@ -1,6 +1,6 @@
 # yilmazcaglayan.av.tr
 
-Av. Yılmaz Çağlayan – Muğla Milas Avukatlık Bürosu web sitesi. Bağımlılık gerektirmeyen statik site.
+Av. Yılmaz Çağlayan | Milas Avukat & Hukuk Bürosu web sitesi. Bağımlılık gerektirmeyen statik site.
 
 ## Çalıştırma (localhost)
 - Windows: `baslat.bat` dosyasına çift tıklayın → http://localhost:8080
@@ -44,6 +44,18 @@ Paragraf... **kalın** yazı için iki yıldız.
 ### Görseller
 - Themis: `assets/img/themis.jpg` eklenirse ana sayfada çizim yerine bu fotoğraf kullanılır.
 - Kitap kapakları: `assets/img/kitaplar/<slug>.jpg` (ör. `ceza-muhakemesi-kanunu.jpg`) eklenirse tipografik kapak yerine gerçek kapak gösterilir.
+
+## Yönetim paneli
+Adres: sitenin sonuna `/yonetim/` ekleyin (ör. `https://yilmazcaglayan.av.tr/yonetim/`). Arama motorlarına kapalıdır.
+
+- **Makaleler:** ekleme, düzenleme, silme; kapak görseli ve metin içi görsel. Görseller tarayıcıda otomatik küçültülür (WEBP).
+- **Ziyaretçiler:** ziyaretçi ve sayfa görüntüleme sayıları, şehir, il, ülke, en çok okunan sayfalar, gelinen siteler, cihazlar (Umami Cloud, çerezsiz).
+- **Ayarlar:** GitHub bağlantısı, istatistik bağlantısı, kullanıcı adı ve şifre değişikliği.
+
+Panel, kaydedilen her değişikliği GitHub deposuna yazar; GitHub Actions siteyi yeniden derleyip 1–2 dakika içinde yayına alır.
+GitHub ve istatistik anahtarları `content/panel.json` içinde, panel şifresiyle (PBKDF2 + AES-GCM) şifrelenmiş olarak durur; açık hâlde hiçbir yerde saklanmaz.
+
+Şifre unutulursa: `node scripts/panel-sifre.js <kullanici-adi> <yeni-sifre>` ile `content/panel.json` yeniden oluşturulup depoya yüklenir. Bu işlem kayıtlı anahtarları da sıfırlar; panelde Ayarlar'dan yeniden girilir.
 
 ## Yayına alırken
 1. `content/site.js` içinde `gaId` (GA4 ölçüm kimliği) ve `gscVerification` (Search Console doğrulama kodu) alanlarını doldurun, `node build.js` çalıştırın.
