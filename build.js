@@ -151,7 +151,6 @@ const NAV = [
   ['/iletisim/', 'İletişim']
 ];
 const NAV_FULL = { '/yayimlanmis-eserler/': 'Yayımlanmış Eserler ve Kitaplar', '/sikca-sorulan-sorular/': 'Sıkça Sorulan Sorular', '/iletisim/': 'İletişim Bilgileri' };
-const yearsProsecutor = 2024 - 2007;
 const shortTitle = t => t.replace(/ Avukatlığı$/, '');
 const crypto = require('crypto');
 const ver = f => crypto.createHash('md5').update(fs.readFileSync(path.join(ROOT, f))).digest('hex').slice(0, 8);
@@ -397,9 +396,9 @@ function home() {
   <div class="about-photo reveal"><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan, Milas'taki bürosunda" width="1170" height="856" loading="lazy"></div>
   <div class="card about-text reveal">
     <span class="eyebrow">Özgeçmiş</span>
-    <h2 class="h2">Savcılık masasından savunmanın yanına.</h2>
-    <p>1979 İstanbul doğumlu, aslen Sinop Gerzeli. İstanbul Üniversitesi Hukuk Fakültesi mezunu. 2007–2024 yılları arasında Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı; 2024'ten bu yana Milas'ta serbest avukat.</p>
-    <div class="tl"><div><b>1996</b><span>İÜ Hukuk Fakültesi</span></div><div><b>2005</b><span>Savcılık stajı</span></div><div><b>2007–24</b><span>Cumhuriyet Savcısı</span></div><div><b>2024</b><span>Avukat · Milas</span></div></div>
+    <h2 class="h2">Hukuku, hukukun diliyle savunmak.</h2>
+    <p>1979 İstanbul doğumlu, aslen Sinop Gerzeli. İstanbul Üniversitesi Hukuk Fakültesi mezunu; dört açıklamalı ve içtihatlı kanun şerhinin yazarı. Muğla Milas'ta serbest avukat.</p>
+    <div class="tl"><div><b>1996</b><span>İÜ Hukuk Fakültesi</span></div><div><b>4</b><span>Kanun şerhi</span></div><div><b>Milas</b><span>Avukatlık bürosu</span></div></div>
     <a class="more" href="/hakkimda/">Özgeçmişin tamamı ${icon('arrow')}</a>
   </div>
 </div></section>
@@ -500,23 +499,21 @@ function booksPage() {
 // HAKKIMDA
 function aboutPage() {
   const crumbs = [['Ana Sayfa', '/'], ['Özgeçmiş', '/hakkimda/']];
-  const body = `${pageHero({ title: 'Avukat Yılmaz ÇAĞLAYAN', eyebrow: 'Özgeçmiş', lead: '2007–2024 yılları arasında Cumhuriyet Savcısı, dört açıklamalı ve içtihatlı kanun şerhinin yazarı. 2024\'ten bu yana Milas\'ta serbest avukat.', crumbs })}
+  const body = `${pageHero({ title: 'Avukat Yılmaz ÇAĞLAYAN', eyebrow: 'Özgeçmiş', lead: 'Dört açıklamalı ve içtihatlı kanun şerhinin yazarı; Muğla Milas\'ta serbest avukat.', crumbs })}
 <section class="section"><div class="wrap bio">
   <div class="bio-text">
     <div class="card prose-card reveal">
       <div class="prose">
         <p>1979 yılında İstanbul'da doğdu. Aslen Sinop, Gerzelidir. İlk ve orta öğrenimini İstanbul'da tamamladı. 1996 yılında Ankara'da Adalet Bakanlığı bünyesinde adliye personeli yetiştirmek amacıyla eğitim veren liseden mezun olduktan sonra, 1996 yılında İstanbul Üniversitesi Hukuk Fakültesi'ni kazandı. Üniversite öğrenciliği yıllarında hukuk eğitimiyle birlikte İstanbul'da adliyede devlet memuru olarak görev yaptı.</p>
-        <p>Hukuk fakültesinden mezuniyetinin ardından bir süre avukatlık stajı yaptı ve 2005 yılında Cumhuriyet Savcılığı stajına başladı. 2007–2024 yılları arasında sırasıyla Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı. Askerlik hizmetini ise Eskişehir'de askerî hâkim olarak yerine getirdi.</p>
-        <p>Mesleki pratik ve yargı uygulamalarından edindiği tecrübeleri akademik alana da aktardı. Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
-        <p>2024 yılında Cumhuriyet Savcılığından emekli olarak serbest avukatlık yapmaya başladı. Halen hukuk mesleğindeki bilgi ve deneyimini avukat olarak Muğla Milas ilçesinde sürdürmektedir.</p>
+        <p>Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
+        <p>Halen serbest avukat olarak Muğla Milas ilçesinde mesleğini sürdürmektedir.</p>
         <p>Evli ve iki çocuk babasıdır.</p>
       </div>
     </div>
     <div class="tl tl-cards reveal">
-      <div><b>1996</b><span>Adalet Bakanlığı adliye personeli lisesi · İstanbul Üniversitesi Hukuk Fakültesi</span></div>
-      <div><b>2005</b><span>Cumhuriyet Savcılığı stajı</span></div>
-      <div><b>2007–2024</b><span>Cumhuriyet Savcısı · Bartın, Ardahan, Manisa, Adana, Bolu</span></div>
-      <div><b>2024</b><span>Serbest avukat · Milas, Muğla</span></div>
+      <div><b>1996</b><span>İstanbul Üniversitesi Hukuk Fakültesi</span></div>
+      <div><b>4</b><span>Açıklamalı ve içtihatlı kanun şerhi</span></div>
+      <div><b>Milas</b><span>Serbest avukat · Muğla</span></div>
     </div>
     <div class="card works-card reveal">
       <h2 class="h3">Akademik Eserler</h2>
@@ -530,7 +527,7 @@ function aboutPage() {
 </div></section>`;
   write('hakkimda/index.html', layout({
     path: '/hakkimda/', title: 'Özgeçmiş | Avukat Yılmaz Çağlayan – Milas',
-    description: "Av. Yılmaz Çağlayan: 2007–2024 yılları arasında Cumhuriyet Savcısı, dört açıklamalı ve içtihatlı kanun şerhinin yazarı. 2024'ten bu yana Milas'ta serbest avukat.",
+    description: "Av. Yılmaz Çağlayan'ın özgeçmişi: İstanbul Üniversitesi Hukuk Fakültesi mezunu, dört açıklamalı ve içtihatlı kanun şerhinin yazarı, Muğla Milas'ta serbest avukat.",
     body, ogType: 'profile', image: '/assets/img/yilmaz-caglayan.jpg',
     schema: [crumbsSchema(crumbs), personSchema(), { '@type': 'ProfilePage', mainEntity: { '@id': PERSON_ID }, url: abs('/hakkimda/') }]
   }));
