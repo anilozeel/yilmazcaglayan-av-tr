@@ -12,7 +12,7 @@ const path = require('path');
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
 const ROOT = __dirname;
 const OUT = path.join(ROOT, args.out || 'dist');
-const THEME = args.theme || require('./content/tema.js');
+// (tema seçimi kaldırıldı — tek tasarım: modern)
 
 const site = require('./content/site.js');
 const areas = require('./content/alanlar.js');
@@ -139,16 +139,21 @@ function crumbsSchema(items) {
 }
 const ld = graph => `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')}</script>`;
 
+
 /* ---------------- şablon parçaları ---------------- */
 const NAV = [
   ['/', 'Ana Sayfa'],
-  ['/calisma-alanlari/', 'Çalışma Alanlarımız'],
-  ['/yayimlanmis-eserler/', 'Eserler ve Kitaplar'],
+  ['/calisma-alanlari/', 'Çalışma Alanları'],
+  ['/yayimlanmis-eserler/', 'Eserler'],
   ['/hakkimda/', 'Özgeçmiş'],
   ['/makaleler/', 'Makaleler'],
   ['/sikca-sorulan-sorular/', 'S.S.S.'],
   ['/iletisim/', 'İletişim']
 ];
+const NAV_FULL = { '/yayimlanmis-eserler/': 'Yayımlanmış Eserler ve Kitaplar', '/sikca-sorulan-sorular/': 'Sıkça Sorulan Sorular', '/iletisim/': 'İletişim Bilgileri' };
+const yearsProsecutor = 2024 - 2007;
+const shortTitle = t => t.replace(/ Avukatlığı$/, '');
+const hasThemisPhoto = () => fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg'));
 
 function header(current) {
   const links = NAV.map(([href, label]) => {
@@ -157,63 +162,59 @@ function header(current) {
   }).join('');
   return `
 <header class="site-header">
-  <div class="topbar"><div class="wrap">
-    <div class="tb-l"><a href="tel:${site.phoneHref}">${esc(site.phone)}</a><a href="mailto:${site.email}">${esc(site.email)}</a></div>
-    <div class="tb-r"><span>${esc(site.hours)}</span></div>
-  </div></div>
   <div class="wrap">
-    <a class="brand" href="/" aria-label="${esc(site.name)} – Ana Sayfa">
-      <span class="brand-mark" aria-hidden="true">YÇ</span>
-      <span class="brand-text">
-        <span class="brand-name">${esc(site.name)}</span>
-        <span class="brand-sub">${esc(site.tagline)}</span>
-      </span>
-    </a>
-    <button class="menu-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Menüyü aç">${icon('menu')}</button>
-    <nav class="nav" id="site-nav" aria-label="Ana menü">${links}<a class="btn nav-cta" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a></nav>
+    <div class="nav-pill">
+      <a class="brand" href="/" aria-label="${esc(site.name)} – Ana Sayfa">
+        <span class="mono" aria-hidden="true">YÇ</span>
+        <span class="brand-text"><span class="brand-name">${esc(site.name)}</span><span class="brand-sub">${esc(site.tagline)}</span></span>
+      </a>
+      <nav class="nav" id="site-nav" aria-label="Ana menü">${links}<a class="nav-call" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a></nav>
+      <a class="nav-cta" href="tel:${site.phoneHref}">${icon('phone')}<span>${esc(site.phone)}</span></a>
+      <button class="menu-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Menüyü aç">${icon('menu')}</button>
+    </div>
   </div>
 </header>`;
 }
 
+function contactBand() {
+  return `
+<section class="contact-band-wrap"><div class="wrap">
+  <div class="contact-band reveal">
+    <div class="cb-text">
+      <span class="eyebrow on-dark">İletişim</span>
+      <h2>Hukuki danışmanlık için randevu alın.</h2>
+      <p>${esc(site.hoursNote)} Somut olayınızı yasal süreler gözetilerek birlikte değerlendirelim.</p>
+      <div class="btn-row">
+        <a class="btn btn-gold" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a>
+        <a class="btn btn-ghost" href="/iletisim/">İletişim Bilgileri</a>
+      </div>
+    </div>
+    <ul class="cb-list">
+      <li><span class="ib">${icon('phone')}</span><span><small>Telefon</small><a href="tel:${site.phoneHref}">${esc(site.phone)}</a></span></li>
+      <li><span class="ib">${icon('mail')}</span><span><small>E-posta</small><a href="mailto:${site.email}">${esc(site.email)}</a></span></li>
+      <li><span class="ib">${icon('pin')}</span><span><small>Adres</small><b>${esc(site.address.full)}</b></span></li>
+      <li><span class="ib">${icon('clock')}</span><span><small>Çalışma saatleri</small><b>${esc(site.hours)}</b></span></li>
+    </ul>
+  </div>
+</div></section>`;
+}
+
 function footer() {
   return `
-<section class="cta-band">
-  <div class="wrap">
-    <div>
-      <h2>Hukuki danışmanlık randevusu için</h2>
-      <p>${esc(site.hours)} · ${esc(site.hoursNote)}</p>
-    </div>
-    <div class="btn-row">
-      <a class="btn btn-gold" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a>
-      <a class="btn btn-ghost-light" href="/iletisim/">İletişim Bilgileri</a>
-    </div>
-  </div>
-</section>
-<footer class="site-footer">
-  <div class="wrap footer-top">
-    <div>
-      <div class="brand"><span class="brand-name">${esc(site.name)}</span><span class="brand-sub">${esc(site.tagline)}</span></div>
+<footer class="site-footer"><div class="wrap">
+  <div class="ft-top">
+    <div class="ft-brand">
+      <a class="brand" href="/"><span class="mono" aria-hidden="true">YÇ</span><span class="brand-text"><span class="brand-name">${esc(site.name)}</span><span class="brand-sub">${esc(site.tagline)}</span></span></a>
       <p>Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
     </div>
-    <div>
-      <h3>Site Haritası</h3>
-      <ul class="footer-links">${NAV.map(([h, l]) => `<li><a href="${h}">${l === 'S.S.S.' ? 'Sıkça Sorulan Sorular' : l}</a></li>`).join('')}</ul>
-    </div>
-    <div>
-      <h3>İletişim</h3>
-      <ul class="footer-contact">
-        <li>${icon('phone')}<a href="tel:${site.phoneHref}">${esc(site.phone)}</a></li>
-        <li>${icon('mail')}<a href="mailto:${site.email}">${esc(site.email)}</a></li>
-        <li>${icon('pin')}<span>${esc(site.address.full)}</span></li>
-        <li>${icon('clock')}<span>${esc(site.hours)}</span></li>
-      </ul>
-    </div>
+    <nav class="ft-links" aria-label="Alt menü">${NAV.map(([h, l]) => `<a href="${h}">${NAV_FULL[h] || l}</a>`).join('')}</nav>
+    <nav class="ft-links" aria-label="Çalışma alanları">${areas.slice(0, 7).map(a => `<a href="/calisma-alanlari/${a.slug}/">${esc(shortTitle(a.title))}</a>`).join('')}</nav>
   </div>
-  <div class="wrap footer-bottom">
-    <span>© ${new Date().getFullYear()} ${esc(site.name)} · Tüm hakları saklıdır.</span>
-    <span>Bu sitedeki içerikler genel bilgilendirme amaçlıdır; hukuki tavsiye niteliği taşımaz.</span>
+  <div class="ft-bottom">
+    <span>© ${new Date().getFullYear()} ${esc(site.name)} · ${esc(site.tagline)}</span>
+    <span>İçerikler genel bilgilendirme amaçlıdır; hukuki tavsiye niteliği taşımaz.</span>
   </div>
-</footer>
+</div></footer>
 <a class="call-fab" href="tel:${site.phoneHref}" aria-label="Telefonla ara: ${esc(site.phone)}">${icon('phone')} Ara</a>`;
 }
 
@@ -223,7 +224,7 @@ function layout({ path: p, title, description, body, schema = [], ogType = 'webs
 <script async src="https://www.googletagmanager.com/gtag/js?id=${site.gaId}"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${site.gaId}',{anonymize_ip:true});</script>` : '';
   return `<!doctype html>
-<html lang="tr" data-theme="${THEME}"${home ? ' class="is-home"' : ''}>
+<html lang="tr"${home ? ' class="is-home"' : ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -232,7 +233,7 @@ function layout({ path: p, title, description, body, schema = [], ogType = 'webs
 <link rel="canonical" href="${canonical}">
 ${noindex ? '<meta name="robots" content="noindex">' : '<meta name="robots" content="index, follow, max-image-preview:large">'}
 ${site.gscVerification ? `<meta name="google-site-verification" content="${esc(site.gscVerification)}">` : ''}
-<meta name="theme-color" content="#1A2B4C">
+<meta name="theme-color" content="#0B1324">
 <meta name="geo.region" content="TR-48">
 <meta name="geo.placename" content="Milas, Muğla">
 <meta property="og:locale" content="tr_TR">
@@ -246,10 +247,10 @@ ${site.gscVerification ? `<meta name="google-site-verification" content="${esc(s
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="/assets/css/style.css">
-${home ? `<link rel="preload" as="image" href="/assets/img/${fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg')) ? 'themis.jpg' : 'themis.svg'}">` : ''}
-<noscript><style>.reveal,.hero-reveal{opacity:1!important;transform:none!important}</style></noscript>
+${home ? `<link rel="preload" as="image" href="/assets/img/${hasThemisPhoto() ? 'themis.jpg' : 'themis.svg'}">` : ''}
+<noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 ${ld([orgSchema(), ...schema])}${ga}
 </head>
 <body>
@@ -257,6 +258,7 @@ ${ld([orgSchema(), ...schema])}${ga}
 ${header(p)}
 <main id="icerik">
 ${body}
+${contactBand()}
 </main>
 ${footer()}
 <script src="/assets/js/main.js" defer></script>
@@ -265,51 +267,63 @@ ${footer()}
 `;
 }
 
-function pageHero({ title, lead, crumbs }) {
-  const c = crumbs.map(([n, h], i) => i < crumbs.length - 1 ? `<a href="${h}">${esc(n)}</a><span aria-hidden="true">/</span>` : `<span>${esc(n)}</span>`).join('');
+function pageHero({ title, lead, crumbs, eyebrow }) {
+  const c = crumbs.map(([n, h], i) => i < crumbs.length - 1 ? `<a href="${h}">${esc(n)}</a><span aria-hidden="true">/</span>` : `<span aria-current="page">${esc(n)}</span>`).join('');
   return `<section class="page-hero"><div class="wrap">
   <nav class="crumbs" aria-label="Sayfa konumu">${c}</nav>
-  <h1>${esc(title)}</h1>${lead ? `<p>${esc(lead)}</p>` : ''}
+  ${eyebrow ? `<span class="tag"><b>${esc(eyebrow)}</b> Milas · Muğla</span>` : ''}
+  <h1>${esc(title)}</h1>${lead ? `<p class="lead">${esc(lead)}</p>` : ''}
 </div></section>`;
 }
 
-const sectionHead = (eyebrow, title, text, tag = 'h2') => `<div class="section-head reveal"><span class="eyebrow">${esc(eyebrow)}</span><${tag} class="h-section">${esc(title)}</${tag}><span class="rule"></span>${text ? `<p>${esc(text)}</p>` : ''}</div>`;
+const sectionHead = (eyebrow, title, text, tag = 'h2') => `<div class="sh reveal"><div><span class="eyebrow">${esc(eyebrow)}</span><${tag} class="h2">${esc(title)}</${tag}></div>${text ? `<p>${esc(text)}</p>` : ''}</div>`;
 
-function areaCards(list = areas) {
-  return `<div class="areas">${list.map(a => `
-  <a class="area-card reveal" href="/calisma-alanlari/${a.slug}/">
-    <span class="area-ico">${icon(a.icon)}</span>
-    <h3>${esc(a.title)}</h3>
+function areaCard(a, extra = '') {
+  return `<a class="card area-card reveal${extra}" href="/calisma-alanlari/${a.slug}/">
+    <span class="ib">${icon(a.icon)}</span>
+    <h3>${esc(shortTitle(a.title))}</h3>
     <p>${esc(a.short)}</p>
     <span class="more">İncele ${icon('arrow')}</span>
-  </a>`).join('')}
-  <a class="area-card area-card-cta reveal" href="/iletisim/">
-    <span class="area-ico">${icon('phone')}</span>
-    <h3>Randevu ve bilgi için</h3>
-    <p>Somut olayınızın değerlendirilmesi için randevulu görüşme planlayabilirsiniz.</p>
-    <span class="more">İletişim ${icon('arrow')}</span>
+  </a>`;
+}
+
+function bento() {
+  const big = areas[0];
+  const rest = areas.slice(1);
+  const pick = [rest[0], rest[1], rest[2], rest[4], rest[6], rest[7], rest[8]]; // borçlar, icra, iş, gayrimenkul, miras, aile, otelcilik
+  const others = rest.filter(a => !pick.includes(a));
+  return `<div class="bento">
+  <a class="card area-big reveal" href="/calisma-alanlari/${big.slug}/">
+    <span class="ib">${icon(big.icon)}</span>
+    <h3>${esc(big.title)}</h3>
+    <p>Kolluk ve savcılık ifadelerinden Ağır Ceza yargılamasına, tutukluluğa itirazdan Yargıtay temyizine kadar savunmanın her aşaması.</p>
+    <span class="pills"><span>İfade ve sorgu</span><span>Tutukluluğa itiraz</span><span>İstinaf · Temyiz</span><span>Bilişim suçları</span></span>
+    <span class="more">Detaylı bilgi ${icon('arrow')}</span>
+  </a>
+  ${pick.map(a => areaCard(a)).join('')}
+  <a class="card area-gold reveal" href="/calisma-alanlari/">
+    <span class="ib">${icon('plus')}</span>
+    <h3>+${others.length} alan daha</h3>
+    <p>${esc(others.map(a => shortTitle(a.title).replace(/ Hukuku.*$/, ' hukuku').replace(/ ve Sözleşme Hazırlanması$/, '')).join(', '))}.</p>
+    <span class="more">Tümünü gör ${icon('arrow')}</span>
   </a>
 </div>`;
 }
 
 function cover(b) {
   const img = fs.existsSync(path.join(ROOT, 'assets/img/kitaplar', b.slug + '.jpg'));
-  if (img) return `<span class="cover"><img src="/assets/img/kitaplar/${b.slug}.jpg" alt="${esc(b.title)} kitap kapağı" loading="lazy"></span>`;
+  if (img) return `<span class="cover has-img"><img src="/assets/img/kitaplar/${b.slug}.jpg" alt="${esc(b.title)} kitap kapağı" loading="lazy"></span>`;
   return `<span class="cover" role="img" aria-label="${esc(b.title)} kitap kapağı">
-    <span class="cover-frame"></span>
-    <span class="cover-over">Açıklamalı – İçtihatlı</span>
-    <span class="cover-title">${esc(b.coverTitle)}</span>
-    <span class="cover-rule"></span>
-    <span class="cover-seal">${icon('scales')}</span>
-    <span class="cover-author">Yılmaz Çağlayan</span>
+    <small>AÇIKLAMALI · İÇTİHATLI</small>
+    <b>${esc(b.coverTitle)}</b>
+    <span class="seal">${icon('scales')}</span>
+    <i>Yılmaz Çağlayan</i>
   </span>`;
 }
 function bookGrid(withText = true) {
   return `<div class="books">${books.map(b => `
-  <article class="book reveal" id="${b.slug}">
-    <button class="book-btn" type="button" data-book data-title="${esc(b.title)}" aria-label="${esc(b.title)} kapağını büyüt">
-      <span class="book-3d" style="display:block">${cover(b)}</span>
-    </button>
+  <article class="card book reveal" id="${b.slug}">
+    <button class="book-btn" type="button" data-book data-title="${esc(b.title)}" aria-label="${esc(b.title)} kapağını büyüt"><span class="book-3d">${cover(b)}</span></button>
     <h3>${esc(b.title)}</h3>
     ${withText ? `<dl><dt>Niteliği</dt><dd>${esc(b.nitelik)}</dd><dt>Kapsam</dt><dd>${esc(b.kapsam)}</dd></dl>` : ''}
   </article>`).join('')}
@@ -320,110 +334,97 @@ function bookGrid(withText = true) {
 </div>`;
 }
 
-function postCards(list) {
-  return `<div class="posts">${list.map(a => `
-  <article class="post-card reveal">
-    <div class="post-meta">${esc(areaBySlug[a.area]?.title.replace(/ Avukatlığı$/, '') || 'Makale')}</div>
+function postCard(a, dark = false) {
+  return `<article class="card post${dark ? ' dark' : ''} reveal">
+    <a class="chip" href="/calisma-alanlari/${a.area}/">${esc(shortTitle(areaBySlug[a.area]?.title || 'Makale'))}</a>
     <h3><a href="${a.url}">${esc(a.title)}</a></h3>
     <p>${esc(a.excerpt)}</p>
-    <a class="more" href="${a.url}">Devamını oku ${icon('arrow')}</a>
-  </article>`).join('')}
-</div>`;
+    <span class="meta"><span>${a.minutes} dk okuma</span><a href="${a.url}">Oku ${icon('arrow')}</a></span>
+  </article>`;
 }
-
-const yearsProsecutor = 2024 - 2007;
 
 /* ---------------- SAYFALAR ---------------- */
 
-// Themis görseli: assets/img/themis.jpg eklenirse fotoğraf, yoksa çizim kullanılır
 function themisMedia() {
-  if (fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg')))
-    return '<picture><source media="(max-width: 680px)" srcset="/assets/img/themis-mobile.jpg"><img class="themis-photo" src="/assets/img/themis.jpg" alt="Bronz Themis (adalet) heykeli" width="1536" height="1024" fetchpriority="high"></picture>';
-  return '<img class="themis-figure" src="/assets/img/themis.svg" alt="" width="800" height="1420" fetchpriority="high">';
+  if (hasThemisPhoto())
+    return '<picture><source media="(max-width: 680px)" srcset="/assets/img/themis-mobile.jpg"><img src="/assets/img/themis.jpg" alt="Bronz Themis (adalet) heykeli" width="1536" height="1024" fetchpriority="high"></picture>';
+  return '<img class="svg" src="/assets/img/themis.svg" alt="Bronz Themis (adalet) heykeli" width="800" height="1420" fetchpriority="high">';
 }
 
 // ANA SAYFA
 function home() {
   const body = `
 <section class="hero" data-interval="8000" aria-label="Karşılama">
-  <div class="slide slide-themis${fs.existsSync(path.join(ROOT, 'assets/img/themis.jpg')) ? ' has-photo' : ''} is-active" aria-roledescription="slayt" aria-label="1 / 2">
-    <div class="slide-media">${themisMedia()}</div>
-    <div class="slide-shade"></div>
-    <div class="slide-content"><div class="wrap">
-      <span class="hero-eyebrow hero-reveal">Milas · Muğla</span>
-      <h1 class="hero-quote hero-reveal d2">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <em>asıl olan haklılığı hukukun diliyle anlatabilmektir…</em></h1>
-    </div></div>
-  </div>
-  <div class="slide slide-portrait" aria-roledescription="slayt" aria-label="2 / 2">
-    <div class="slide-media"></div>
-    <div class="slide-shade"></div>
-    <div class="slide-content"><div class="wrap">
-      <span class="hero-eyebrow hero-reveal">Motivasyonumuz</span>
-      <p class="hero-text hero-reveal d2">Motivasyonumuz; Muğla Milas ve çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemektir.</p>
-      <p class="hero-sign hero-reveal d3">Av. Yılmaz Çağlayan</p>
-    </div></div>
-  </div>
-  <div class="hero-dots" role="tablist" aria-label="Slaytlar">
-    <button type="button" class="is-active" role="tab" aria-selected="true" aria-label="1. slayt"></button>
-    <button type="button" role="tab" aria-selected="false" aria-label="2. slayt"></button>
-  </div>
-  <span class="hero-scroll" aria-hidden="true">Kaydır</span>
-</section>
-
-<div class="stats-strip"><div class="wrap"><div class="stats-box">
-  <div class="stat"><b>${yearsProsecutor}+</b><span>yıl Cumhuriyet Savcılığı tecrübesi</span></div>
-  <div class="stat"><b>4</b><span>açıklamalı ve içtihatlı kanun şerhi</span></div>
-  <div class="stat"><b>${areas.length}</b><span>çalışma alanında hukuki hizmet</span></div>
-  <div class="stat"><b>Milas</b><span>Muğla, Bodrum ve çevre adliyeleri</span></div>
-</div></div></div>
-
-<section class="section">
-  <div class="wrap">
-    ${sectionHead('Çalışma Alanlarımız', 'Hukukun her aşamasında yanınızdayız', 'Soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar; Milas ve çevresinde bireylere ve kurumlara hukuki destek.')}
-    ${areaCards()}
-    <p class="areas-note reveal">Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
-  </div>
-</section>
-
-<section class="section section-alt">
-  <div class="wrap about-split">
-    <div class="reveal">
-      <span class="eyebrow">Özgeçmiş</span>
-      <h2 class="h-section">Avukat Yılmaz ÇAĞLAYAN</h2>
-      <span class="rule rule-left"></span>
-      <p class="lead">2007–2024 yılları arasında Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı. 2024 yılından bu yana mesleki bilgi ve deneyimini avukat olarak Muğla Milas'ta sürdürmektedir.</p>
-      <div class="facts">
-        <div class="fact"><b>${yearsProsecutor}+</b><span>yıl savcılık</span></div>
-        <div class="fact"><b>4</b><span>yayımlanmış eser</span></div>
-        <div class="fact"><b>1996</b><span>İstanbul Üniversitesi Hukuk Fakültesi</span></div>
+  <div class="wrap hero-grid">
+    <div class="hero-left">
+      <div class="hero-stack">
+        <div class="hs is-active" data-slide="0">
+          <span class="tag"><b>Milas</b> Muğla, Bodrum ve çevre adliyeleri</span>
+          <h1 class="hero-title">Haklı olmak bir başlangıçtır, ancak yeterli değildir; <span>asıl olan haklılığı hukukun diliyle anlatabilmektir…</span></h1>
+        </div>
+        <div class="hs" data-slide="1" aria-hidden="true">
+          <span class="tag"><b>Motivasyonumuz</b> Av. Yılmaz Çağlayan</span>
+          <p class="hero-motto">Muğla Milas ve çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, <span>hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemek.</span></p>
+        </div>
       </div>
-      <a class="btn" href="/hakkimda/">Özgeçmişi incele ${icon('arrow')}</a>
+      <p class="lead">Ceza, tazminat, icra, iş, gayrimenkul ve aile hukukunda; ${yearsProsecutor} yılı aşkın Cumhuriyet Savcılığı deneyimiyle hukuki danışmanlık ve dava takibi.</p>
+      <div class="btn-row">
+        <a class="btn btn-gold" href="tel:${site.phoneHref}">Randevu Al ${icon('arrow')}</a>
+        <a class="btn btn-ghost" href="/calisma-alanlari/">Çalışma Alanları</a>
+      </div>
+      <div class="stats">
+        <div><b>${yearsProsecutor}+</b><span>yıl Cumhuriyet Savcılığı</span></div>
+        <div><b>${books.length}</b><span>açıklamalı kanun şerhi</span></div>
+        <div><b>${areas.length}</b><span>çalışma alanı</span></div>
+      </div>
     </div>
-    <div class="about-photo reveal">
-      <img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan, Milas'taki bürosunda" width="1170" height="856" loading="lazy">
+    <div class="hero-photo">
+      <div class="hp is-active" data-slide="0"><div class="hp-media">${themisMedia()}</div></div>
+      <div class="hp" data-slide="1"><div class="hp-media"><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan" width="1170" height="856"></div></div>
+      <span class="badge"><span class="dot"></span>${esc(site.hours.replace('Hafta İçi:', 'Hafta içi'))}</span>
+      <div class="person">
+        <img src="/assets/img/yilmaz-caglayan-600.jpg" alt="" width="600" height="439">
+        <span><b>Av. Yılmaz Çağlayan</b><span>2007–2024 Cumhuriyet Savcısı · 2024'ten beri Milas'ta avukat</span></span>
+      </div>
+      <div class="hero-dots" role="tablist" aria-label="Slaytlar">
+        <button type="button" class="is-active" role="tab" aria-selected="true" aria-label="1. slayt"></button>
+        <button type="button" role="tab" aria-selected="false" aria-label="2. slayt"></button>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="section">
-  <div class="wrap">
-    ${sectionHead('Yayımlanmış Eserler', 'Hukuk literatürüne katkı', 'Yargı uygulamasını ve mevzuat hükümlerini akademik bir perspektifle ele alan açıklamalı ve içtihatlı kanun şerhleri.')}
-    ${bookGrid(false)}
-    <p style="text-align:center;margin-top:56px" class="reveal"><a class="btn" href="/yayimlanmis-eserler/">Tüm eserler ${icon('arrow')}</a></p>
-  </div>
-</section>
+<section class="section"><div class="wrap">
+  ${sectionHead('Çalışma Alanlarımız', 'Hukukun her aşamasında yanınızdayız.', 'Soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar bireylere ve kurumlara hukuki destek.')}
+  ${bento()}
+  <p class="note reveal">Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
+</div></section>
 
-<section class="section section-alt">
-  <div class="wrap">
-    ${sectionHead('Makaleler', 'Hukuki bilgilendirme yazıları')}
-    ${postCards(articles.slice(0, 3))}
-    <p style="text-align:center;margin-top:56px" class="reveal"><a class="btn" href="/makaleler/">Tüm makaleler ${icon('arrow')}</a></p>
+<section class="section"><div class="wrap about">
+  <div class="about-photo reveal"><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan, Milas'taki bürosunda" width="1170" height="856" loading="lazy"></div>
+  <div class="card about-text reveal">
+    <span class="eyebrow">Özgeçmiş</span>
+    <h2 class="h2">Savcılık masasından savunmanın yanına.</h2>
+    <p>1979 İstanbul doğumlu, aslen Sinop Gerzeli. İstanbul Üniversitesi Hukuk Fakültesi mezunu. 2007–2024 yılları arasında Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı; 2024'ten bu yana Milas'ta serbest avukat.</p>
+    <div class="tl"><div><b>1996</b><span>İÜ Hukuk Fakültesi</span></div><div><b>2005</b><span>Savcılık stajı</span></div><div><b>2007–24</b><span>Cumhuriyet Savcısı</span></div><div><b>2024</b><span>Avukat · Milas</span></div></div>
+    <a class="more" href="/hakkimda/">Özgeçmişin tamamı ${icon('arrow')}</a>
   </div>
-</section>`;
+</div></section>
+
+<section class="section"><div class="wrap">
+  ${sectionHead('Yayımlanmış Eserler', 'Hukuk literatürüne katkı.', 'Yargı uygulamasını ve mevzuat hükümlerini akademik bir perspektifle ele alan açıklamalı ve içtihatlı kanun şerhleri.')}
+  ${bookGrid(false)}
+</div></section>
+
+<section class="section"><div class="wrap">
+  ${sectionHead('Makaleler', 'Hukuki bilgilendirme.', "Güncel mevzuat ve Milas, Muğla'daki uygulama ışığında hazırlanan yazılar.")}
+  <div class="posts posts-home">${articles.slice(0, 3).map((a, k) => postCard(a, k === 0)).join('')}</div>
+  <p class="center reveal"><a class="btn btn-line" href="/makaleler/">Tüm makaleler ${icon('arrow')}</a></p>
+</div></section>`;
   write('index.html', layout({
     path: '/', home: true,
     title: 'Avukat Yılmaz Çağlayan | Milas Avukat – Muğla Milas Avukatlık Bürosu',
-    description: 'Milas avukatı Yılmaz Çağlayan: ceza, tazminat, icra, iş, gayrimenkul, miras ve aile hukuku. Muğla, Milas ve Bodrum\'da dava takibi ve hukuki danışmanlık.',
+    description: "Milas avukatı Yılmaz Çağlayan: ceza, tazminat, icra, iş, gayrimenkul, miras ve aile hukuku. Muğla, Milas ve Bodrum'da dava takibi ve hukuki danışmanlık.",
     body,
     schema: [{ '@type': 'WebSite', '@id': abs('/#site'), url: abs('/'), name: site.name, inLanguage: 'tr-TR', publisher: { '@id': ORG_ID } }, personSchema()]
   }));
@@ -431,21 +432,22 @@ function home() {
 
 // ÇALIŞMA ALANLARI
 function areasPage() {
-  const body = `${pageHero({ title: 'Çalışma Alanlarımız', lead: 'Milas, Bodrum ve Muğla genelinde; dava süreçlerinden önleyici hukuki danışmanlığa kadar geniş bir alanda hizmet veriyoruz.', crumbs: [['Ana Sayfa', '/'], ['Çalışma Alanlarımız', '/calisma-alanlari/']] })}
+  const body = `${pageHero({ title: 'Çalışma Alanlarımız', eyebrow: `${areas.length} alan`, lead: 'Milas, Bodrum ve Muğla genelinde; dava süreçlerinden önleyici hukuki danışmanlığa kadar geniş bir alanda hizmet veriyoruz.', crumbs: [['Ana Sayfa', '/'], ['Çalışma Alanlarımız', '/calisma-alanlari/']] })}
 <section class="section"><div class="wrap">
-  <div class="area-list">${areas.map(a => `
-    <article class="area-row reveal" id="${a.slug}">
-      <span class="area-ico">${icon(a.icon)}</span>
+  <div class="area-list">${areas.map((a, k) => `
+    <article class="card area-row reveal" id="${a.slug}">
+      <span class="num">${String(k + 1).padStart(2, '0')}</span>
+      <span class="ib">${icon(a.icon)}</span>
       <div><h2><a href="/calisma-alanlari/${a.slug}/">${esc(a.title)}</a></h2><p>${esc(a.text)}</p></div>
-      <a class="more" href="/calisma-alanlari/${a.slug}/">Detaylı bilgi ${icon('arrow')}</a>
+      <a class="arrow-btn" href="/calisma-alanlari/${a.slug}/" aria-label="${esc(a.title)} detayları">${icon('arrow')}</a>
     </article>`).join('')}
   </div>
-  <p class="areas-note reveal">Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
+  <p class="note reveal">Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.</p>
 </div></section>`;
   write('calisma-alanlari/index.html', layout({
     path: '/calisma-alanlari/',
     title: 'Çalışma Alanlarımız | Milas Avukat Yılmaz Çağlayan',
-    description: 'Milas ve Muğla\'da ceza, borçlar ve tazminat, icra-iflas, iş, ticaret, gayrimenkul ve imar, idare ve vergi, miras, aile, otelcilik hukuku ve hukuki danışmanlık.',
+    description: "Milas ve Muğla'da ceza, borçlar ve tazminat, icra-iflas, iş, ticaret, gayrimenkul ve imar, idare ve vergi, miras, aile, otelcilik hukuku ve hukuki danışmanlık.",
     body,
     schema: [crumbsSchema([['Ana Sayfa', '/'], ['Çalışma Alanlarımız', '/calisma-alanlari/']])]
   }));
@@ -454,17 +456,31 @@ function areasPage() {
     const rel = articles.filter(x => x.area === a.slug || x.related.includes(a.slug));
     const q = faq.find(g => g.area === a.slug);
     const others = areas.filter(x => x.slug !== a.slug);
-    const crumbs = [['Ana Sayfa', '/'], ['Çalışma Alanlarımız', '/calisma-alanlari/'], [a.title, `/calisma-alanlari/${a.slug}/`]];
-    const body = `${pageHero({ title: a.title, lead: a.short, crumbs })}
-<section class="article"><div class="wrap-narrow">
-  <div class="prose">
-    <p>${esc(a.text)}</p>
-    <p>Milas, Bodrum ve Muğla genelindeki adli ve idari yargı mercilerinde, ${esc(a.title.replace(/ Avukatlığı$/, '').toLocaleLowerCase('tr-TR'))} alanındaki süreçler; yasal süreler ve şekil şartları gözetilerek, dosyanın her aşamasında titizlikle takip edilmektedir.</p>
+    const crumbs = [['Ana Sayfa', '/'], ['Çalışma Alanları', '/calisma-alanlari/'], [shortTitle(a.title), `/calisma-alanlari/${a.slug}/`]];
+    const body = `${pageHero({ title: a.title, eyebrow: 'Çalışma alanı', lead: a.short, crumbs })}
+<section class="section"><div class="wrap detail">
+  <div class="detail-main">
+    <div class="card prose-card reveal">
+      <span class="ib big">${icon(a.icon)}</span>
+      <div class="prose">
+        <p>${esc(a.text)}</p>
+        <p>Milas, Bodrum ve Muğla genelindeki adli ve idari yargı mercilerinde, ${esc(shortTitle(a.title).toLocaleLowerCase('tr-TR'))} alanındaki süreçler; yasal süreler ve şekil şartları gözetilerek, dosyanın her aşamasında titizlikle takip edilmektedir.</p>
+      </div>
+    </div>
+    ${q ? `<div class="faq-group reveal"><h2 class="h3">Sıkça Sorulan Sorular</h2>${q.items.map(it => `<details class="acc"><summary>${esc(it.q)}<span class="pm" aria-hidden="true"></span></summary><div class="acc-body"><p>${esc(it.a)}</p></div></details>`).join('')}</div>` : ''}
+    ${rel.length ? `<div class="reveal"><h2 class="h3">İlgili Makaleler</h2><div class="posts posts-2">${rel.map(r => postCard(r)).join('')}</div></div>` : ''}
   </div>
-  ${q ? `<div class="faq-group" style="margin-top:56px"><h2 style="margin-bottom:18px">Sıkça Sorulan Sorular</h2>${q.items.map(it => `<details class="acc"><summary>${esc(it.q)}<span class="pm" aria-hidden="true"></span></summary><div class="acc-body"><p>${esc(it.a)}</p></div></details>`).join('')}</div>` : ''}
-  ${rel.length ? `<aside class="article-aside"><h2>İlgili Makaleler</h2><div class="post-list" style="border:0">${rel.map(r => `<div><a class="chip" href="${r.url}">${icon('book')} ${esc(r.title)}</a></div>`).join('')}</div></aside>` : ''}
-  <aside class="article-aside" style="margin-top:24px"><h2>Diğer Çalışma Alanları</h2><div class="chip-row">${others.map(o => `<a class="chip" href="/calisma-alanlari/${o.slug}/">${icon(o.icon)} ${esc(o.title.replace(/ Avukatlığı$/, ''))}</a>`).join('')}</div></aside>
-  <p class="legal-note">Bu sayfadaki bilgiler genel bilgilendirme amaçlıdır; somut olayınıza ilişkin değerlendirme için randevu alabilirsiniz.</p>
+  <aside class="detail-side">
+    <div class="card side-card">
+      <h2 class="h4">Diğer çalışma alanları</h2>
+      <nav class="side-links">${others.map(o => `<a href="/calisma-alanlari/${o.slug}/">${icon(o.icon)}<span>${esc(shortTitle(o.title))}</span></a>`).join('')}</nav>
+    </div>
+    <div class="card side-cta">
+      <h2 class="h4">Randevu için</h2>
+      <p>${esc(site.hours)}<br>${esc(site.hoursNote)}</p>
+      <a class="btn btn-gold btn-block" href="tel:${site.phoneHref}">${icon('phone')} ${esc(site.phone)}</a>
+    </div>
+  </aside>
 </div></section>`;
     write(`calisma-alanlari/${a.slug}/index.html`, layout({
       path: `/calisma-alanlari/${a.slug}/`, title: `${a.seoTitle} | Av. Yılmaz Çağlayan`, description: a.seoDesc, body,
@@ -476,14 +492,13 @@ function areasPage() {
 // ESERLER
 function booksPage() {
   const crumbs = [['Ana Sayfa', '/'], ['Yayımlanmış Eserler ve Kitaplar', '/yayimlanmis-eserler/']];
-  const body = `${pageHero({ title: 'Yayımlanmış Eserler ve Kitaplar', crumbs })}
+  const body = `${pageHero({ title: 'Yayımlanmış Eserler ve Kitaplar', eyebrow: `${books.length} eser`, lead: 'Hukuk literatürüne katkı sağlamak, yargı uygulamasını ve mevzuat hükümlerini akademik bir perspektifle ele almak amacıyla kaleme alınmış yayımlanmış hukuki eserlerimiz şunlardır:', crumbs })}
 <section class="section"><div class="wrap">
-  <div class="section-head reveal"><p style="font-family:var(--f-display);font-size:21px;color:var(--navy);line-height:1.6">Hukuk literatürüne katkı sağlamak, yargı uygulamasını ve mevzuat hükümlerini akademik bir perspektifle ele almak amacıyla kaleme alınmış yayımlanmış hukuki eserlerimiz şunlardır:</p><span class="rule"></span></div>
   ${bookGrid(true)}
 </div></section>`;
   write('yayimlanmis-eserler/index.html', layout({
     path: '/yayimlanmis-eserler/', title: 'Yayımlanmış Eserler ve Kitaplar | Av. Yılmaz Çağlayan',
-    description: 'Av. Yılmaz Çağlayan\'ın açıklamalı ve içtihatlı kanun şerhleri: Hukuk Muhakemeleri Kanunu, Ceza Muhakemesi Kanunu, Türk Medeni Kanunu ve Türk Borçlar Kanunu.',
+    description: "Av. Yılmaz Çağlayan'ın açıklamalı ve içtihatlı kanun şerhleri: Hukuk Muhakemeleri Kanunu, Ceza Muhakemesi Kanunu, Türk Medeni Kanunu ve Türk Borçlar Kanunu.",
     body,
     schema: [crumbsSchema(crumbs), ...books.map(b => ({ '@type': 'Book', name: b.title, author: { '@id': PERSON_ID }, inLanguage: 'tr', about: b.nitelik, url: abs(`/yayimlanmis-eserler/#${b.slug}`) }))]
   }));
@@ -492,38 +507,37 @@ function booksPage() {
 // HAKKIMDA
 function aboutPage() {
   const crumbs = [['Ana Sayfa', '/'], ['Özgeçmiş', '/hakkimda/']];
-  const body = `${pageHero({ title: 'Özgeçmiş', crumbs })}
+  const body = `${pageHero({ title: 'Avukat Yılmaz ÇAĞLAYAN', eyebrow: 'Özgeçmiş', lead: '2007–2024 yılları arasında Cumhuriyet Savcısı, dört açıklamalı ve içtihatlı kanun şerhinin yazarı. 2024\'ten bu yana Milas\'ta serbest avukat.', crumbs })}
 <section class="section"><div class="wrap bio">
   <div class="bio-text">
-    <span class="eyebrow">Hakkımda</span>
-    <h2 class="h-section">Avukat Yılmaz ÇAĞLAYAN</h2>
-    <span class="rule rule-left"></span>
-    <div class="prose">
-      <p>1979 yılında İstanbul'da doğdu. Aslen Sinop, Gerzelidir. İlk ve orta öğrenimini İstanbul'da tamamladı. 1996 yılında Ankara'da Adalet Bakanlığı bünyesinde adliye personeli yetiştirmek amacıyla eğitim veren liseden mezun olduktan sonra, 1996 yılında İstanbul Üniversitesi Hukuk Fakültesi'ni kazandı. Üniversite öğrenciliği yıllarında hukuk eğitimiyle birlikte İstanbul'da adliyede devlet memuru olarak görev yaptı.</p>
-      <p>Hukuk fakültesinden mezuniyetinin ardından bir süre avukatlık stajı yaptı ve 2005 yılında Cumhuriyet Savcılığı stajına başladı. 2007–2024 yılları arasında sırasıyla Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı. Askerlik hizmetini ise Eskişehir'de askerî hâkim olarak yerine getirdi.</p>
-      <p>Mesleki pratik ve yargı uygulamalarından edindiği tecrübeleri akademik alana da aktardı. Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
-      <p>2024 yılında Cumhuriyet Savcılığından emekli olarak serbest avukatlık yapmaya başladı. Halen hukuk mesleğindeki bilgi ve deneyimini avukat olarak Muğla Milas ilçesinde sürdürmektedir.</p>
-      <p>Evli ve iki çocuk babasıdır.</p>
+    <div class="card prose-card reveal">
+      <div class="prose">
+        <p>1979 yılında İstanbul'da doğdu. Aslen Sinop, Gerzelidir. İlk ve orta öğrenimini İstanbul'da tamamladı. 1996 yılında Ankara'da Adalet Bakanlığı bünyesinde adliye personeli yetiştirmek amacıyla eğitim veren liseden mezun olduktan sonra, 1996 yılında İstanbul Üniversitesi Hukuk Fakültesi'ni kazandı. Üniversite öğrenciliği yıllarında hukuk eğitimiyle birlikte İstanbul'da adliyede devlet memuru olarak görev yaptı.</p>
+        <p>Hukuk fakültesinden mezuniyetinin ardından bir süre avukatlık stajı yaptı ve 2005 yılında Cumhuriyet Savcılığı stajına başladı. 2007–2024 yılları arasında sırasıyla Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı. Askerlik hizmetini ise Eskişehir'de askerî hâkim olarak yerine getirdi.</p>
+        <p>Mesleki pratik ve yargı uygulamalarından edindiği tecrübeleri akademik alana da aktardı. Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
+        <p>2024 yılında Cumhuriyet Savcılığından emekli olarak serbest avukatlık yapmaya başladı. Halen hukuk mesleğindeki bilgi ve deneyimini avukat olarak Muğla Milas ilçesinde sürdürmektedir.</p>
+        <p>Evli ve iki çocuk babasıdır.</p>
+      </div>
     </div>
-    <ul class="timeline">
-      <li><b>1996</b><span>Adalet Bakanlığı adliye personeli lisesi, Ankara · İstanbul Üniversitesi Hukuk Fakültesi</span></li>
-      <li><b>2005</b><span>Cumhuriyet Savcılığı stajı</span></li>
-      <li><b>2007 – 2024</b><span>Cumhuriyet Savcısı · Bartın, Ardahan, Manisa, Adana, Bolu</span></li>
-      <li><b>2024 –</b><span>Serbest avukat · Milas, Muğla</span></li>
-    </ul>
-    <h3 style="font-size:24px;margin-top:48px">Akademik Eserler</h3>
-    <ol class="works">${books.map(b => `<li><a href="/yayimlanmis-eserler/#${b.slug}">${esc(b.title)}</a></li>`).join('')}</ol>
+    <div class="tl tl-cards reveal">
+      <div><b>1996</b><span>Adalet Bakanlığı adliye personeli lisesi · İstanbul Üniversitesi Hukuk Fakültesi</span></div>
+      <div><b>2005</b><span>Cumhuriyet Savcılığı stajı</span></div>
+      <div><b>2007–2024</b><span>Cumhuriyet Savcısı · Bartın, Ardahan, Manisa, Adana, Bolu</span></div>
+      <div><b>2024</b><span>Serbest avukat · Milas, Muğla</span></div>
+    </div>
+    <div class="card works-card reveal">
+      <h2 class="h3">Akademik Eserler</h2>
+      <ol class="works">${books.map(b => `<li><a href="/yayimlanmis-eserler/#${b.slug}">${esc(b.title)}</a></li>`).join('')}</ol>
+    </div>
   </div>
-  <aside class="bio-photo">
-    <figure>
-      <span class="ph"><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan" width="1170" height="856"></span>
-      <figcaption>Av. Yılmaz Çağlayan<span>Milas · Muğla</span></figcaption>
-    </figure>
+  <aside class="bio-photo reveal">
+    <figure><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan" width="1170" height="856">
+      <figcaption><b>Av. Yılmaz Çağlayan</b><span>Milas · Muğla</span></figcaption></figure>
   </aside>
 </div></section>`;
   write('hakkimda/index.html', layout({
     path: '/hakkimda/', title: 'Özgeçmiş | Avukat Yılmaz Çağlayan – Milas',
-    description: 'Av. Yılmaz Çağlayan: 2007–2024 yılları arasında Cumhuriyet Savcısı, dört açıklamalı ve içtihatlı kanun şerhinin yazarı. 2024\'ten bu yana Milas\'ta serbest avukat.',
+    description: "Av. Yılmaz Çağlayan: 2007–2024 yılları arasında Cumhuriyet Savcısı, dört açıklamalı ve içtihatlı kanun şerhinin yazarı. 2024'ten bu yana Milas'ta serbest avukat.",
     body, ogType: 'profile', image: '/assets/img/yilmaz-caglayan.jpg',
     schema: [crumbsSchema(crumbs), personSchema(), { '@type': 'ProfilePage', mainEntity: { '@id': PERSON_ID }, url: abs('/hakkimda/') }]
   }));
@@ -532,22 +546,13 @@ function aboutPage() {
 // MAKALELER
 function articlesPages() {
   const crumbs = [['Ana Sayfa', '/'], ['Makaleler', '/makaleler/']];
-  const body = `${pageHero({ title: 'Makaleler', lead: 'Güncel mevzuat ve yargı uygulaması ışığında hazırlanan hukuki bilgilendirme yazıları.', crumbs })}
+  const body = `${pageHero({ title: 'Makaleler', eyebrow: `${articles.length} yazı`, lead: 'Güncel mevzuat ve yargı uygulaması ışığında hazırlanan hukuki bilgilendirme yazıları.', crumbs })}
 <section class="section"><div class="wrap">
-  <div class="post-list">${articles.map(a => `
-    <article class="post-row reveal">
-      <div>
-        <div class="post-meta"><a href="/calisma-alanlari/${a.area}/">${esc(areaBySlug[a.area]?.title || '')}</a> · ${a.minutes} dk okuma</div>
-        <h2><a href="${a.url}">${esc(a.title)}</a></h2>
-        <p>${esc(a.excerpt)}</p>
-      </div>
-      <a class="more" href="${a.url}">Oku ${icon('arrow')}</a>
-    </article>`).join('')}
-  </div>
+  <div class="posts posts-grid">${articles.map((a, k) => postCard(a, k === 0)).join('')}</div>
 </div></section>`;
   write('makaleler/index.html', layout({
     path: '/makaleler/', title: 'Hukuki Makaleler | Milas Avukat Yılmaz Çağlayan',
-    description: 'Ceza, kira, icra, iş, ticaret, gayrimenkul, idare, miras ve aile hukukuna dair makaleler; Milas ve Muğla\'daki uygulamaya ilişkin değerlendirmeler.',
+    description: "Ceza, kira, icra, iş, ticaret, gayrimenkul, idare, miras ve aile hukukuna dair makaleler; Milas ve Muğla'daki uygulamaya ilişkin değerlendirmeler.",
     body,
     schema: [crumbsSchema(crumbs), { '@type': 'CollectionPage', name: 'Makaleler', url: abs('/makaleler/'), hasPart: articles.map(a => ({ '@type': 'Article', headline: a.title, url: abs(a.url) })) }]
   }));
@@ -559,19 +564,30 @@ function articlesPages() {
     const fill = articles.filter(x => x !== a && !relPosts.includes(x));
     const more = [...relPosts, ...fill].slice(0, 3);
     const c = [['Ana Sayfa', '/'], ['Makaleler', '/makaleler/'], [a.title, a.url]];
-    const body = `${pageHero({ title: a.title, crumbs: c })}
-<article class="article"><div class="wrap-narrow">
-  <div class="post-meta">${area ? `<a href="/calisma-alanlari/${area.slug}/">${esc(area.title)}</a> · ` : ''}${a.minutes} dk okuma · <time datetime="${a.date}">${fmtDate(a.date)}</time></div>
-  <div class="prose">${a.html}</div>
-  <aside class="article-aside">
-    <h2>İlgili Çalışma Alanı</h2>
-    <div class="chip-row">${relAreas.map(r => `<a class="chip" href="/calisma-alanlari/${r.slug}/">${icon(r.icon)} ${esc(r.title)}</a>`).join('')}</div>
+    const body = `${pageHero({ title: a.title, eyebrow: area ? shortTitle(area.title) : 'Makale', crumbs: c })}
+<section class="section"><div class="wrap detail">
+  <article class="detail-main">
+    <div class="card prose-card article-card reveal">
+      <div class="post-meta">${area ? `<a href="/calisma-alanlari/${area.slug}/">${esc(area.title)}</a> · ` : ''}${a.minutes} dk okuma · <time datetime="${a.date}">${fmtDate(a.date)}</time></div>
+      <div class="prose">${a.html}</div>
+      <p class="legal-note">Bu makale genel bilgilendirme amacıyla hazırlanmış olup hukuki tavsiye niteliği taşımaz. Somut uyuşmazlıklar, yasal mevzuat ve süreler dikkate alınarak bir hukuk profesyoneli eşliğinde değerlendirilmelidir.</p>
+    </div>
+  </article>
+  <aside class="detail-side">
+    <div class="card side-card">
+      <h2 class="h4">İlgili çalışma alanı</h2>
+      <nav class="side-links">${relAreas.map(r => `<a href="/calisma-alanlari/${r.slug}/">${icon(r.icon)}<span>${esc(shortTitle(r.title))}</span></a>`).join('')}</nav>
+    </div>
+    <div class="card side-cta">
+      <h2 class="h4">Hukuki destek</h2>
+      <p>Somut olayınızın değerlendirilmesi için randevu alabilirsiniz.</p>
+      <a class="btn btn-gold btn-block" href="tel:${site.phoneHref}">${icon('phone')} ${esc(site.phone)}</a>
+    </div>
   </aside>
-  <p class="legal-note">Bu makale genel bilgilendirme amacıyla hazırlanmış olup hukuki tavsiye niteliği taşımaz. Somut uyuşmazlıklar, yasal mevzuat ve süreler dikkate alınarak bir hukuk profesyoneli eşliğinde değerlendirilmelidir.</p>
-</div></article>
-<section class="section section-alt"><div class="wrap">
-  ${sectionHead('Makaleler', 'Diğer yazılar')}
-  ${postCards(more)}
+</div></section>
+<section class="section"><div class="wrap">
+  ${sectionHead('Makaleler', 'Diğer yazılar.')}
+  <div class="posts posts-home">${more.map(m => postCard(m)).join('')}</div>
 </div></section>`;
     write(`makaleler/${a.slug}/index.html`, layout({
       path: a.url, title: `${a.title} | Av. Yılmaz Çağlayan`, description: a.description, body, ogType: 'article',
@@ -587,16 +603,19 @@ function articlesPages() {
 // SSS
 function faqPage() {
   const crumbs = [['Ana Sayfa', '/'], ['Sıkça Sorulan Sorular', '/sikca-sorulan-sorular/']];
-  const body = `${pageHero({ title: 'Sıkça Sorulan Sorular', lead: 'Çalışma alanlarımıza ilişkin en çok merak edilen sorular ve kısa cevapları.', crumbs })}
-<section class="section"><div class="wrap-narrow">
+  const body = `${pageHero({ title: 'Sıkça Sorulan Sorular', eyebrow: 'S.S.S.', lead: 'Çalışma alanlarımıza ilişkin en çok merak edilen sorular ve kısa cevapları.', crumbs })}
+<section class="section"><div class="wrap faq-wrap">
+  <nav class="card faq-index" aria-label="Konular">${faq.map(g => `<a href="#${g.area}">${icon(areaBySlug[g.area]?.icon || 'fileSearch')}<span>${esc(g.group.replace(/ Avukatlığı$/, ''))}</span></a>`).join('')}</nav>
+  <div class="faq-list">
   ${faq.map(g => {
     const a = areaBySlug[g.area];
     return `<div class="faq-group reveal" id="${g.area}">
-    <div class="faq-group-head">${a ? `<span class="area-ico">${icon(a.icon)}</span>` : ''}<h2>${a ? `<a href="/calisma-alanlari/${a.slug}/">${esc(g.group)}</a>` : esc(g.group)}</h2></div>
+    <div class="faq-head">${a ? `<span class="ib">${icon(a.icon)}</span>` : ''}<h2 class="h3">${a ? `<a href="/calisma-alanlari/${a.slug}/">${esc(g.group)}</a>` : esc(g.group)}</h2></div>
     ${g.items.map(it => `<details class="acc"><summary>${esc(it.q)}<span class="pm" aria-hidden="true"></span></summary><div class="acc-body"><p>${esc(it.a)}</p></div></details>`).join('')}
   </div>`;
   }).join('')}
-  <div class="disclaimer"><strong>Yasal Sorumluluk Reddi Uyarısı</strong>${esc(faq.disclaimer)}</div>
+  <div class="card disclaimer"><strong>Yasal Sorumluluk Reddi Uyarısı</strong><p>${esc(faq.disclaimer)}</p></div>
+  </div>
 </div></section>`;
   write('sikca-sorulan-sorular/index.html', layout({
     path: '/sikca-sorulan-sorular/', title: 'Sıkça Sorulan Sorular | Milas Avukat Yılmaz Çağlayan',
@@ -610,21 +629,19 @@ function faqPage() {
 function contactPage() {
   const crumbs = [['Ana Sayfa', '/'], ['İletişim', '/iletisim/']];
   const q = encodeURIComponent(site.address.full.replace(' / ', ' '));
-  const body = `${pageHero({ title: 'İletişim Bilgileri', lead: 'Hukuki danışmanlık randevuları ve yasal süreçlerle ilgili bilgilendirmeler için aşağıdaki kanallar üzerinden iletişim sağlayabilirsiniz.', crumbs })}
+  const body = `${pageHero({ title: 'İletişim Bilgileri', eyebrow: 'Randevu', lead: 'Hukuki danışmanlık randevuları ve yasal süreçlerle ilgili bilgilendirmeler için aşağıdaki kanallar üzerinden iletişim sağlayabilirsiniz.', crumbs })}
 <section class="section"><div class="wrap contact-grid">
-  <div>
-    <ul class="contact-list">
-      <li><span class="area-ico">${icon('phone')}</span><div><small>Telefon</small><a href="tel:${site.phoneHref}">${esc(site.phone)}</a></div></li>
-      <li><span class="area-ico">${icon('mail')}</span><div><small>E-posta</small><a href="mailto:${site.email}">${esc(site.email)}</a></div></li>
-      <li><span class="area-ico">${icon('pin')}</span><div><small>Adres</small><p>${esc(site.address.street)}<br>${esc(site.address.district)} / ${trUpper(site.address.city)}</p></div></li>
-      <li><span class="area-ico">${icon('clock')}</span><div><small>Çalışma Saatleri</small><p>${esc(site.hours)}</p><p class="note">${esc(site.hoursNote)}</p></div></li>
-    </ul>
+  <div class="contact-cards">
+    <a class="card cc reveal" href="tel:${site.phoneHref}"><span class="ib">${icon('phone')}</span><small>Telefon</small><b>${esc(site.phone)}</b></a>
+    <a class="card cc reveal" href="mailto:${site.email}"><span class="ib">${icon('mail')}</span><small>E-posta</small><b>${esc(site.email)}</b></a>
+    <div class="card cc reveal"><span class="ib">${icon('pin')}</span><small>Adres</small><b>${esc(site.address.street)}<br>${esc(site.address.district)} / ${trUpper(site.address.city)}</b></div>
+    <div class="card cc reveal"><span class="ib">${icon('clock')}</span><small>Çalışma Saatleri</small><b>${esc(site.hours)}</b><span class="sub">${esc(site.hoursNote)}</span></div>
     <div class="btn-row">
-      <a class="btn btn-solid" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a>
-      <a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=${q}" target="_blank" rel="noopener">${icon('pin')} Yol Tarifi Al</a>
+      <a class="btn btn-dark" href="tel:${site.phoneHref}">${icon('phone')} Hemen Ara</a>
+      <a class="btn btn-line" href="https://www.google.com/maps/dir/?api=1&amp;destination=${q}" target="_blank" rel="noopener">${icon('pin')} Yol Tarifi Al</a>
     </div>
   </div>
-  <div class="map">
+  <div class="map reveal">
     <iframe title="Büro konumu – Google Haritalar" src="https://www.google.com/maps?q=${q}&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
   </div>
 </div></section>`;
@@ -640,7 +657,7 @@ function notFound() {
   write('404.html', layout({
     path: '/404.html', title: 'Sayfa bulunamadı | Av. Yılmaz Çağlayan', description: 'Aradığınız sayfa bulunamadı.', noindex: true,
     body: `${pageHero({ title: 'Sayfa bulunamadı', lead: 'Aradığınız sayfa taşınmış veya kaldırılmış olabilir.', crumbs: [['Ana Sayfa', '/'], ['404', '/404.html']] })}
-<section class="section"><div class="wrap"><div class="btn-row"><a class="btn btn-solid" href="/">Ana sayfaya dön</a><a class="btn" href="/iletisim/">İletişim</a></div></div></section>`
+<section class="section"><div class="wrap"><div class="btn-row"><a class="btn btn-dark" href="/">Ana sayfaya dön</a><a class="btn btn-line" href="/iletisim/">İletişim</a></div></div></section>`
   }));
 }
 
@@ -664,4 +681,4 @@ fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 copyDir(path.join(ROOT, 'assets'), path.join(OUT, 'assets'), f => f.startsWith('src-') || f === '.DS_Store');
 home(); areasPage(); booksPage(); aboutPage(); articlesPages(); faqPage(); contactPage(); notFound(); sitemapAndRobots();
-console.log(`✓ ${OUT} üretildi${BASE ? ' (önizleme, taban: ' + BASE + ')' : ''} · tema: ${THEME} · ${areas.length} alan · ${articles.length} makale`);
+console.log(`✓ ${OUT} üretildi${BASE ? ' (önizleme, taban: ' + BASE + ')' : ''} · ${areas.length} alan · ${articles.length} makale`);

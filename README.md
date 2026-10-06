@@ -18,7 +18,6 @@ Tüm içerik `content/` klasöründedir. Değişiklikten sonra `node build.js` �
 | `content/eserler.js` | Kitaplar |
 | `content/sss.js` | Sıkça sorulan sorular ve sorumluluk reddi |
 | `content/makaleler/*.md` | Makaleler |
-| `content/tema.js` | Tema (`a` Klasik, `b` Editoryal, `c` Modern) |
 
 ### Yeni makale eklemek
 `content/makaleler/` içine yeni bir `.md` dosyası ekleyin (ör. `12-yeni-makale.md`):
