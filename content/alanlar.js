@@ -4,6 +4,7 @@
 module.exports = [
   {
     slug: 'ceza-hukuku',
+    footerLabel: 'Ceza Hukuku Avukatlığı',
     title: 'Ceza Hukuku Avukatlığı',
     short: 'Soruşturma ve kovuşturma aşamalarında, ifade sürecinden kanun yollarına kadar savunma.',
     icon: 'gavel',
@@ -13,6 +14,7 @@ module.exports = [
   },
   {
     slug: 'borclar-hukuku-ve-tazminat',
+    footerLabel: 'Borçlar Hukuku Avukatlığı',
     title: 'Borçlar Hukuku ve Tazminat Avukatlığı',
     short: 'Sözleşme uyuşmazlıkları, trafik kazası ve malpraktis kaynaklı maddi-manevi tazminat.',
     icon: 'scroll',
@@ -22,6 +24,7 @@ module.exports = [
   },
   {
     slug: 'icra-iflas-hukuku',
+    footerLabel: 'İcra Hukuku Avukatlığı',
     title: 'İcra-İflas Hukuku ve Takip Avukatlığı',
     short: 'İlamlı-ilamsız takipler, kıymetli evrak tahsilatı, itiraz davaları ve konkordato.',
     icon: 'lockOpen',
@@ -31,6 +34,7 @@ module.exports = [
   },
   {
     slug: 'is-hukuku',
+    footerLabel: 'İş Hukuku Avukatlığı',
     title: 'İş Hukuku ve İşçi-İşveren Avukatlığı',
     short: 'Kıdem-ihbar tazminatı, işçilik alacakları, işe iade ve zorunlu arabuluculuk.',
     icon: 'handshake',
@@ -40,6 +44,7 @@ module.exports = [
   },
   {
     slug: 'ticaret-hukuku',
+    footerLabel: 'Ticaret – Şirketler Hukuku Avukatlığı',
     title: 'Ticaret Hukuku ve Şirketler Avukatlığı',
     short: 'Şirket kuruluşu, genel kurul, ticari sözleşmeler ve ortaklar arası uyuşmazlıklar.',
     icon: 'briefcase',
@@ -49,6 +54,7 @@ module.exports = [
   },
   {
     slug: 'gayrimenkul-ve-imar-hukuku',
+    footerLabel: 'Gayrimenkul – İmar Hukuku Avukatlığı',
     title: 'Gayrimenkul ve İmar Hukuku Avukatlığı',
     short: 'Tapu iptal ve tescil, ecrimisil, imar planı iptali ve kamulaştırma davaları.',
     icon: 'house',
@@ -58,6 +64,7 @@ module.exports = [
   },
   {
     slug: 'idare-ve-vergi-hukuku',
+    footerLabel: 'İdare – Vergi Hukuku Avukatlığı',
     title: 'İdare ve Vergi Hukuku Avukatlığı',
     short: 'İdari işlemlerin iptali, tam yargı davaları ve vergi uyuşmazlıkları.',
     icon: 'landmark',
@@ -67,6 +74,7 @@ module.exports = [
   },
   {
     slug: 'miras-hukuku',
+    footerLabel: 'Miras Hukuku – Ortaklığın Paylaştırılması Avukatlığı',
     title: 'Miras Hukuku ve Ortaklığın Giderilmesi Avukatlığı',
     short: 'Vasiyetname, mirasçılık belgesi, reddi miras, muris muvazaası ve izale-i şuyu.',
     icon: 'tree',
@@ -76,6 +84,7 @@ module.exports = [
   },
   {
     slug: 'aile-hukuku-ve-bosanma',
+    footerLabel: 'Aile Hukuku – Boşanma Avukatlığı',
     title: 'Aile Hukuku ve Boşanma Avukatlığı',
     short: 'Anlaşmalı ve çekişmeli boşanma, nafaka, velayet ve mal rejiminin tasfiyesi.',
     icon: 'rings',
@@ -85,6 +94,7 @@ module.exports = [
   },
   {
     slug: 'otelcilik-hukuku',
+    footerLabel: 'Otelcilik Hukuku Danışmanlığı',
     title: 'Otelcilik Hukuku – Turizm Danışmanlığı',
     short: 'Otel işletmelerinde hukuki risk yönetimi, KVKK, ruhsat ve sürekli danışmanlık.',
     icon: 'bell',
@@ -94,6 +104,7 @@ module.exports = [
   },
   {
     slug: 'hukuki-danismanlik',
+    footerLabel: 'Hukuki Danışmanlık',
     title: 'Hukuki Danışmanlık ve Sözleşme Hazırlanması',
     short: 'Uyuşmazlık doğmadan risk tespiti, sözleşme analizi ve hukuki mütalaa.',
     icon: 'fileSearch',
