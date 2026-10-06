@@ -228,9 +228,15 @@
     var t0 = Date.now();
     var linkHtml = link ? ' <a href="' + esc(link) + '" target="_blank" rel="noopener">Sitede gör</a>' : '';
     pubbar('<b>Siteye gönderildi, yayınlanıyor…</b><small>Değişiklikler genellikle 1–2 dakika içinde sitede görünür.</small>');
+    var latest = false;
     function tick() {
-      gh(REPO + '/actions/runs?head_sha=' + sha + '&per_page=5').then(function (d) {
+      gh(REPO + '/actions/runs?' + (latest ? 'branch=' + BRANCH + '&per_page=1' : 'head_sha=' + sha + '&per_page=5')).then(function (d) {
         var run = d && d.workflow_runs && d.workflow_runs[0];
+        if (run && run.status === 'completed' && run.conclusion === 'cancelled') {
+          latest = true;
+          S.pubTimer = setTimeout(tick, 3000);
+          return;
+        }
         if (run && run.status === 'completed') {
           if (run.conclusion === 'success') { pubbar('<b>Yayında.</b><small>Değişiklik sitede görünüyor. Eski hâli görünürse sayfayı yenileyin.</small>' + linkHtml, 'ok'); }
           else { pubbar('<b>Yayınlama tamamlanamadı.</b><small>Site önceki hâliyle yayında kalmaya devam ediyor. <a href="' + esc(run.html_url) + '" target="_blank" rel="noopener">Ayrıntılar</a></small>', 'bad'); }
