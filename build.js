@@ -360,7 +360,7 @@ function home() {
 <section class="hero" data-interval="8000" data-tone="dark" aria-label="Karşılama">
   <div class="hero-bg">
     <div class="hp is-active" data-slide="0" data-tone="dark"><div class="hp-media">${themisMedia()}</div></div>
-    <div class="hp" data-slide="1" data-tone="light" aria-hidden="true"><div class="hp-media"><img src="/assets/img/yilmaz-caglayan-soft.jpg" alt="Avukat Yılmaz Çağlayan" width="987" height="850" loading="lazy"></div></div>
+    <div class="hp hp-portrait" data-slide="1" data-tone="portrait" aria-hidden="true"><div class="hp-media"><img src="/assets/img/yilmaz-caglayan.jpg" alt="Avukat Yılmaz Çağlayan" width="1170" height="856" loading="lazy"></div></div>
   </div>
   <div class="wrap hero-inner">
     <div class="hero-stack">
@@ -505,15 +505,17 @@ function aboutPage() {
     <div class="card prose-card reveal">
       <div class="prose">
         <p>1979 yılında İstanbul'da doğdu. Aslen Sinop, Gerzelidir. İlk ve orta öğrenimini İstanbul'da tamamladı. 1996 yılında Ankara'da Adalet Bakanlığı bünyesinde adliye personeli yetiştirmek amacıyla eğitim veren liseden mezun olduktan sonra, 1996 yılında İstanbul Üniversitesi Hukuk Fakültesi'ni kazandı. Üniversite öğrenciliği yıllarında hukuk eğitimiyle birlikte İstanbul'da adliyede devlet memuru olarak görev yaptı.</p>
-        <p>Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
-        <p>Halen serbest avukat olarak Muğla Milas ilçesinde mesleğini sürdürmektedir.</p>
+        <p>Hukuk fakültesinden mezuniyetinin ardından bir süre avukatlık stajı yaptı ve 2005 yılında Cumhuriyet Savcılığı stajına başladı. 2007–2024 yılları arasında sırasıyla Bartın, Ardahan, Manisa, Adana ve Bolu'da Cumhuriyet Savcısı olarak görev yaptı. Askerlik hizmetini ise Eskişehir'de askerî hâkim olarak yerine getirdi.</p>
+        <p>Mesleki pratik ve yargı uygulamalarından edindiği tecrübeleri akademik alana da aktardı. Hukuk literatürüne katkı sağlayan dört adet açıklamalı ve içtihatlı kanun şerhi kaleme aldı.</p>
+        <p>2024 yılında Cumhuriyet Savcılığından emekli olarak serbest avukatlık yapmaya başladı. Halen hukuk mesleğindeki bilgi ve deneyimini avukat olarak Muğla Milas ilçesinde sürdürmektedir.</p>
         <p>Evli ve iki çocuk babasıdır.</p>
       </div>
     </div>
     <div class="tl tl-cards reveal">
       <div><b>1996</b><span>İstanbul Üniversitesi Hukuk Fakültesi</span></div>
-      <div><b>4</b><span>Açıklamalı ve içtihatlı kanun şerhi</span></div>
-      <div><b>Milas</b><span>Serbest avukat · Muğla</span></div>
+      <div><b>2005</b><span>Cumhuriyet Savcılığı stajı</span></div>
+      <div><b>2007–2024</b><span>Cumhuriyet Savcısı · Bartın, Ardahan, Manisa, Adana, Bolu</span></div>
+      <div><b>2024</b><span>Serbest avukat · Milas, Muğla</span></div>
     </div>
     <div class="card works-card reveal">
       <h2 class="h3">Akademik Eserler</h2>
