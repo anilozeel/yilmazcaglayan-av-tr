@@ -80,3 +80,42 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  hosting:
+    needs: build
+    if: needs.build.outputs.atla != '1'
+    runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
+      FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+      LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        if: env.FTP_SERVER != ''
+        with:
+          node-version: 20
+
+      - name: Hosting sürümünü derle
+        if: env.FTP_SERVER != ''
+        run: node build.js --out=_hosting
+
+      - name: Hosting'e yükle (FTP)
+        if: env.FTP_SERVER != ''
+        run: |
+          sudo apt-get update -qq > /dev/null
+          sudo apt-get install -y -qq lftp > /dev/null
+          HOST="${FTP_SERVER#ftp://}"
+          HOST="${HOST%/}"
+          AYAR="set ftp:ssl-allow yes; set ftp:passive-mode yes; set net:max-retries 3; set net:timeout 40; set net:reconnect-interval-base 5"
+          LISTE=$(lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; cls -1; bye" "$HOST")
+          if printf '%s\n' "$LISTE" | grep -qx 'public_html/\?'; then HEDEF=public_html
+          elif printf '%s\n' "$LISTE" | grep -qx 'httpdocs/\?'; then HEDEF=httpdocs
+          elif printf '%s\n' "$LISTE" | grep -qx 'www/\?'; then HEDEF=www
+          else HEDEF=.; fi
+          echo "Hedef klasör: $HEDEF"
+          lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; mirror -R --parallel=4 _hosting/ $HEDEF/; bye" "$HOST"
+          echo "Hosting'e yükleme tamamlandı."
