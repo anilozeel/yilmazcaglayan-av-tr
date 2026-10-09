@@ -692,6 +692,29 @@ ${urls.map(([u, p, f, d]) => `  <url><loc>${abs(u)}</loc><lastmod>${d || BUILD_D
 `);
   write('robots.txt', PREVIEW ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nDisallow: /yonetim/\n\nSitemap: ${abs('/sitemap.xml')}\n`);
   if (PREVIEW) write('.nojekyll', '');
+  if (!PREVIEW) write('.htaccess', `DirectoryIndex index.html
+ErrorDocument 404 /404.html
+Options -Indexes
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+</IfModule>
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml text/xml text/plain
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType application/json "access plus 0 seconds"
+</IfModule>
+`);
 }
 
 // YÖNETİM PANELİ
