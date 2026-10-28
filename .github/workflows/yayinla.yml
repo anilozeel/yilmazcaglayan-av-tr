@@ -4,123 +4,126 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '23 2 4 * *'   # her ayın 4'ü: ziyaretçi konum veritabanını yenile
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: hosting
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    outputs:
-      atla: ${{ steps.paket.outputs.atla }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Yüklenen paketi aç
-        id: paket
-        run: |
-          if [ -f site-paket.tgz ]; then
-            tar -xzf site-paket.tgz
-            git rm -q --cached site-paket.tgz || true
-            rm -f site-paket.tgz
-            echo "PAKET=1" >> $GITHUB_ENV
-          fi
-          if [ ! -f build.js ]; then echo "build.js yok, atlanıyor"; echo "ATLA=1" >> $GITHUB_ENV; echo "atla=1" >> $GITHUB_OUTPUT; fi
-
-      - name: Themis görselini al
-        if: env.ATLA != '1'
-        run: |
-          if [ ! -f assets/img/src-themis.png ]; then
-            curl -fsSL -o assets/img/src-themis.png "https://www.figma.com/api/mcp/asset/ebd0b2e8-5c08-4103-9f44-4195976a03f6.png" || rm -f assets/img/src-themis.png
-          fi
-
-      - name: Görselleri üret
-        if: env.ATLA != '1'
-        run: |
-          if [ -f scripts/gorseller.py ]; then
-            pip install --quiet pillow numpy
-            python3 scripts/gorseller.py
-          fi
-
-      - name: Dosyaları depoya kaydet
-        if: env.ATLA != '1'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --quiet || (git commit -m "Site dosyaları ve görseller" && (git push || echo "Depoya gonderim atlandi, derlemeye devam ediliyor"))
-
-      - uses: actions/setup-node@v4
-        if: env.ATLA != '1'
-        with:
-          node-version: 20
-
-      - name: Siteyi derle
-        if: env.ATLA != '1'
-        run: node build.js --out=_site --base=/${{ github.event.repository.name }}
-
-      - uses: actions/upload-pages-artifact@v3
-        if: env.ATLA != '1'
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    if: needs.build.outputs.atla != '1'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
   hosting:
-    needs: build
-    if: needs.build.outputs.atla != '1'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       FTP_SERVER: ${{ secrets.FTP_SERVER }}
       FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
       LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
+
+      - name: Yüklenen paketi aç
+        run: |
+          if [ -f site-paket.tgz ]; then
+            tar -xzf site-paket.tgz
+            git rm -q --cached site-paket.tgz || true
+            rm -f site-paket.tgz
+            if [ -f .silinecekler ]; then xargs -a .silinecekler git rm -rq --ignore-unmatch --; rm -f .silinecekler; fi
+            git config user.name "github-actions[bot]"
+            git config user.email "41898+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git diff --cached --quiet || (git commit -q -m "Site dosyaları güncellendi" && (git push -q || echo "::warning::Depoya gönderim atlandı, yayına devam ediliyor"))
+          fi
+
+      - name: Hazırlık
+        id: hazir
+        run: |
+          if [ ! -d sunucu ] || [ ! -f lib/render.js ]; then echo "Yeni site dosyaları henüz yüklenmedi; bu çalıştırma atlanıyor."; echo "atla=1" >> $GITHUB_OUTPUT; exit 0; fi
+          if [ -z "$FTP_SERVER" ] || [ -z "$FTP_USERNAME" ] || [ -z "$LFTP_PASSWORD" ]; then echo "::error::FTP_SERVER / FTP_USERNAME / FTP_PASSWORD gizli değişkenleri eksik."; exit 1; fi
+          echo "ay=$(date -u +%Y-%m)" >> $GITHUB_OUTPUT
+          echo "onceki=$(date -u -d "$(date -u +%Y-%m-15) -1 month" +%Y-%m)" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-node@v4
-        if: env.FTP_SERVER != ''
+        if: steps.hazir.outputs.atla != '1'
         with:
           node-version: 20
 
-      - name: Hosting sürümünü derle
-        if: env.FTP_SERVER != ''
-        run: node build.js --out=_hosting
-
-      - name: Hosting'e yükle (FTP)
-        if: env.FTP_SERVER != ''
+      - name: FTP aracını kur ve hedef klasörü bul
+        id: ftp
+        if: steps.hazir.outputs.atla != '1'
         run: |
           sudo apt-get update -qq > /dev/null
           sudo apt-get install -y -qq lftp > /dev/null
-          HOST="${FTP_SERVER#ftp://}"
-          HOST="${HOST%/}"
-          if ! getent hosts "$HOST" > /dev/null; then
-            echo "::warning::$HOST adresi henüz çözülmüyor (alan adı DNS ayarı bekleniyor). Hosting yüklemesi bu sefer atlandı."
-            exit 0
-          fi
-          AYAR="set ftp:ssl-allow yes; set ftp:passive-mode yes; set dns:fatal-timeout 30; set net:max-retries 3; set net:timeout 40; set net:reconnect-interval-base 5"
+          HOST="${FTP_SERVER#ftp://}"; HOST="${HOST%/}"
+          if ! getent hosts "$HOST" > /dev/null; then echo "::error::$HOST adresi çözümlenemiyor (alan adı DNS ayarı)."; exit 1; fi
+          AYAR="set ftp:ssl-allow yes; set ftp:passive-mode yes; set dns:fatal-timeout 30; set net:max-retries 3; set net:timeout 40; set net:reconnect-interval-base 5; set cmd:fail-exit no"
+          echo "AYAR=$AYAR" >> $GITHUB_ENV
+          echo "HOST=$HOST" >> $GITHUB_ENV
           LISTE=$(lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; cls -1; bye" "$HOST")
           if printf '%s\n' "$LISTE" | grep -qx 'public_html/\?'; then HEDEF=public_html
           elif printf '%s\n' "$LISTE" | grep -qx 'httpdocs/\?'; then HEDEF=httpdocs
           elif printf '%s\n' "$LISTE" | grep -qx 'www/\?'; then HEDEF=www
           else HEDEF=.; fi
           echo "Hedef klasör: $HEDEF"
-          lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; mirror -R --parallel=4 _hosting/ $HEDEF/; bye" "$HOST"
+          echo "HEDEF=$HEDEF" >> $GITHUB_ENV
+
+      - name: Yönetim paneli verilerini sunucudan al
+        if: steps.hazir.outputs.atla != '1'
+        run: |
+          mkdir -p _sunucu
+          lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; lcd _sunucu; cd $HEDEF/yc-veri && mget -O . *.json.php; bye" "$HOST" > /dev/null 2>&1 || true
+          ls -la _sunucu
+          echo "Sunucudaki kayıtlı içerik dosyası sayısı: $(ls _sunucu | grep -c '\.json\.php$' || true)"
+
+      - name: Siteyi derle
+        if: steps.hazir.outputs.atla != '1'
+        run: node build.js --out=_hosting --veri=_sunucu
+
+      - name: Konum veritabanı önbelleği
+        if: steps.hazir.outputs.atla != '1'
+        uses: actions/cache@v4
+        with:
+          path: _geo
+          key: dbip-city-lite-${{ steps.hazir.outputs.ay }}
+
+      - name: Konum veritabanını hazırla (DB-IP Lite, CC BY 4.0)
+        if: steps.hazir.outputs.atla != '1'
+        run: |
+          mkdir -p _geo
+          if [ ! -s _geo/dbip-city-lite.mmdb ]; then
+            for AY in ${{ steps.hazir.outputs.ay }} ${{ steps.hazir.outputs.onceki }}; do
+              if curl -fsSL --retry 3 -o _geo/db.mmdb.gz "https://download.db-ip.com/free/dbip-city-lite-$AY.mmdb.gz"; then
+                gunzip -f _geo/db.mmdb.gz && mv _geo/db.mmdb _geo/dbip-city-lite.mmdb && echo "Konum veritabanı: $AY" && break
+              fi
+            done
+          fi
+          if [ -s _geo/dbip-city-lite.mmdb ]; then
+            ls -la _geo
+            php -r 'define("YC",1); define("YC_VERI","x"); require "sunucu/yonetim/mmdb.php"; $d = new YcMmdb("_geo/dbip-city-lite.mmdb"); foreach (["8.8.8.8","88.255.0.1","2a00:1450:4001::1"] as $ip) { $r = $d->lookup($ip); echo $ip, " => ", $r["country"]["iso_code"] ?? "-", " / ", $r["city"]["names"]["en"] ?? "-", "\n"; }' || echo "::warning::Konum veritabanı testi başarısız"
+          else
+            echo "::warning::Konum veritabanı indirilemedi; ziyaretçi ülke/şehir bilgisi bu sefer güncellenmedi."
+          fi
+
+      - name: Hosting'e yükle (FTP)
+        if: steps.hazir.outputs.atla != '1'
+        run: |
+          lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; set cmd:fail-exit yes; mirror -R --parallel=4 --no-perms _hosting/ $HEDEF/; bye" "$HOST"
+          if [ -s _geo/dbip-city-lite.mmdb ]; then
+            lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; mirror -R --ignore-time --no-perms --include-glob=dbip-city-lite.mmdb _geo/ $HEDEF/yc-veri/geo/; bye" "$HOST" || echo "::warning::Konum veritabanı yüklenemedi"
+          fi
+          # Eski GitHub tabanlı panelin dosyalarını kaldır
+          lftp --env-password -u "$FTP_USERNAME" -e "$AYAR; rm -f $HEDEF/yonetim/index.html $HEDEF/yonetim/panel.json $HEDEF/yonetim/makaleler.json; bye" "$HOST" > /dev/null 2>&1 || true
           echo "Hosting'e yükleme tamamlandı."
+
+      - name: Canlı site kontrolü
+        if: steps.hazir.outputs.atla != '1'
+        run: |
+          sleep 3
+          for U in / /yonetim/ /makaleler/; do
+            KOD=$(curl -s -o /dev/null -w "%{http_code}" "http://$(node -e "console.log(new URL(require('./veri-ilk/site.json').url).host)")$U" || true)
+            echo "$U -> $KOD"
+          done
+          curl -s "http://yilmazcaglayan.av.tr/yonetim/api.php?a=durum" || true
