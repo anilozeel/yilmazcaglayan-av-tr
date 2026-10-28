@@ -1,0 +1,80 @@
+{
+  "slaytSuresi": 2,
+  "slaytlar": [
+    {
+      "stil": "baslik",
+      "ton": "koyu",
+      "gorsel": "/assets/img/themis.jpg",
+      "gorselMobil": "/assets/img/themis-mobile.jpg",
+      "gorselAlt": "Bronz Themis (adalet) heykeli",
+      "ustKalin": "Av. Yılmaz Çağlayan",
+      "ust": "Milas Avukat & Hukuk Bürosu",
+      "baslik": "Haklı olmak bir başlangıçtır, ancak yeterli değildir;",
+      "baslikVurgu": "asıl olan haklılığı hukukun diliyle anlatabilmektir…",
+      "butonlar": true
+    },
+    {
+      "stil": "motto",
+      "ton": "portre",
+      "gorsel": "/assets/img/yilmaz-caglayan.jpg",
+      "gorselMobil": "",
+      "gorselAlt": "Avukat Yılmaz Çağlayan",
+      "ustKalin": "",
+      "ust": "",
+      "baslik": "Misyonumuz;",
+      "baslikVurgu": "Muğla ve Milas çevresinde, hukukun mutlak üstünlüğünü ve savunma hakkının kutsallığını temel alarak, hak arama mücadelesinde kararlı bir şekilde mesleki bilgi ve deneyimimizi sergilemek.",
+      "butonlar": false
+    }
+  ],
+  "buton1": "Randevu Al",
+  "buton2": "Çalışma Alanları",
+  "alanlar": {
+    "ust": "",
+    "baslik": "Hukukun her aşamasında yanınızdayız.",
+    "metin": "Milas ve Muğla'da Hukuki Danışmanlık ve Avukatlık Hizmetleri: soruşturmadan kanun yollarına, sözleşme hazırlığından uyuşmazlığın çözümüne kadar bireylere ve kurumlara hukuki destek.",
+    "secili": [
+      "ceza-hukuku",
+      "borclar-hukuku-ve-tazminat",
+      "icra-iflas-hukuku",
+      "is-hukuku",
+      "gayrimenkul-ve-imar-hukuku",
+      "miras-hukuku",
+      "aile-hukuku-ve-bosanma",
+      "otelcilik-hukuku"
+    ],
+    "not": "Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır."
+  },
+  "hakkinda": {
+    "ust": "Özgeçmiş",
+    "baslik": "Hukuku, hukukun diliyle savunmak.",
+    "metin": "1979 İstanbul doğumlu, aslen Sinop Gerzeli. İstanbul Üniversitesi Hukuk Fakültesi mezunu; dört açıklamalı ve içtihatlı kanun şerhinin yazarı. Muğla Milas'ta serbest avukat.",
+    "gorsel": "/assets/img/yilmaz-caglayan.jpg",
+    "sayilar": [
+      {
+        "deger": "1996",
+        "aciklama": "İÜ Hukuk Fakültesi"
+      },
+      {
+        "deger": "4",
+        "aciklama": "Kanun şerhi"
+      },
+      {
+        "deger": "Milas",
+        "aciklama": "Avukatlık bürosu"
+      }
+    ],
+    "link": "Özgeçmişin tamamı"
+  },
+  "eserler": {
+    "ust": "Yayımlanmış Eserler",
+    "baslik": "Hukuk literatürüne katkı.",
+    "metin": "Yargı uygulamasını ve mevzuat hükümlerini akademik bir perspektifle ele alan açıklamalı ve içtihatlı kanun şerhleri."
+  },
+  "makaleler": {
+    "ust": "Makaleler",
+    "baslik": "Hukuki bilgilendirme.",
+    "metin": "Güncel mevzuat ve Milas, Muğla'daki uygulama ışığında hazırlanan yazılar.",
+    "adet": 3,
+    "buton": "Tüm makaleler"
+  }
+}

@@ -53,8 +53,15 @@
     }
     function stop() { if (timer) clearInterval(timer); }
     function start() { stop(); timer = setInterval(function () { show(i + 1); }, ms); }
+    var paused = false;
     dots.forEach(function (b, k) { b.addEventListener('click', function () { show(k); start(); }); });
-    d.addEventListener('visibilitychange', function () { d.hidden ? stop() : start(); });
+    d.addEventListener('visibilitychange', function () { d.hidden || paused ? stop() : start(); });
+    // Masaüstünde metnin üzerine gelinince okumak için durur
+    var stack = hero.querySelector('.hero-stack');
+    if (stack && window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+      stack.addEventListener('mouseenter', function () { paused = true; stop(); hero.classList.add('is-paused'); });
+      stack.addEventListener('mouseleave', function () { paused = false; hero.classList.remove('is-paused'); if (count > 1) { show(i); start(); } });
+    }
     if (count > 1) start();
   }
 
@@ -91,6 +98,15 @@
       });
     });
   });
+
+  // Ziyaretçi sayacı (sitenin kendi sunucusunda; çerez kullanmaz)
+  try {
+    if (location.protocol.indexOf('http') === 0 && !/^\/yonetim\//.test(location.pathname)) {
+      var payload = JSON.stringify({ p: location.pathname, r: d.referrer || '', w: window.screen ? screen.width : 0 });
+      if (navigator.sendBeacon) navigator.sendBeacon('/sayac.php', new Blob([payload], { type: 'text/plain' }));
+      else if (window.fetch) fetch('/sayac.php', { method: 'POST', body: payload, keepalive: true, credentials: 'same-origin' });
+    }
+  } catch (e) { /* sayaç hatası siteyi etkilemez */ }
 
   // Görünüme girerken yumuşak belirme
   var els = d.querySelectorAll('.reveal');

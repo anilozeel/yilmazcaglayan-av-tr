@@ -1,0 +1,85 @@
+{
+  "menu": [
+    {
+      "href": "/",
+      "label": "Ana Sayfa",
+      "uzun": "Ana Sayfa"
+    },
+    {
+      "href": "/calisma-alanlari/",
+      "label": "Çalışma Alanları",
+      "uzun": "Çalışma Alanları"
+    },
+    {
+      "href": "/yayimlanmis-eserler/",
+      "label": "Yayımlanmış Eserler",
+      "uzun": "Yayımlanmış Eserler ve Kitaplar"
+    },
+    {
+      "href": "/hakkimda/",
+      "label": "Özgeçmiş",
+      "uzun": "Özgeçmiş"
+    },
+    {
+      "href": "/makaleler/",
+      "label": "Makaleler",
+      "uzun": "Makaleler"
+    },
+    {
+      "href": "/sikca-sorulan-sorular/",
+      "label": "Sıkça Sorulan Sorular",
+      "uzun": "Sıkça Sorulan Sorular"
+    },
+    {
+      "href": "/iletisim/",
+      "label": "İletişim",
+      "uzun": "İletişim Bilgileri"
+    }
+  ],
+  "aramaButonu": "Hemen Ara",
+  "alanlarSayfa": {
+    "baslik": "Çalışma Alanlarımız",
+    "giris": "Milas, Bodrum ve Muğla genelinde; dava süreçlerinden önleyici hukuki danışmanlığa kadar geniş bir alanda hizmet veriyoruz.",
+    "not": "Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.",
+    "seoTitle": "Çalışma Alanlarımız | Milas Avukat Yılmaz Çağlayan",
+    "seoDesc": "Milas ve Muğla'da ceza, borçlar ve tazminat, icra-iflas, iş, ticaret, gayrimenkul ve imar, idare ve vergi, miras, aile, otelcilik hukuku ve hukuki danışmanlık.",
+    "randevuBaslik": "Randevu için"
+  },
+  "eserlerSayfa": {
+    "baslik": "Yayımlanmış Eserler ve Kitaplar",
+    "giris": "Hukuk literatürüne katkı sağlamak, yargı uygulamasını ve mevzuat hükümlerini akademik bir perspektifle ele almak amacıyla kaleme alınmış yayımlanmış hukuki eserlerimiz şunlardır:",
+    "seoTitle": "Yayımlanmış Eserler ve Kitaplar | Av. Yılmaz Çağlayan",
+    "seoDesc": "Av. Yılmaz Çağlayan'ın açıklamalı ve içtihatlı kanun şerhleri: Hukuk Muhakemeleri Kanunu, Ceza Muhakemesi Kanunu, Türk Medeni Kanunu ve Türk Borçlar Kanunu."
+  },
+  "makalelerSayfa": {
+    "baslik": "Makaleler",
+    "giris": "Güncel mevzuat ve yargı uygulaması ışığında hazırlanan hukuki bilgilendirme yazıları.",
+    "seoTitle": "Hukuki Makaleler | Milas Avukat Yılmaz Çağlayan",
+    "seoDesc": "Ceza, kira, icra, iş, ticaret, gayrimenkul, idare, miras ve aile hukukuna dair makaleler; Milas ve Muğla'daki uygulamaya ilişkin değerlendirmeler.",
+    "uyari": "Bu makale genel bilgilendirme amacıyla hazırlanmış olup hukuki tavsiye niteliği taşımaz. Somut uyuşmazlıklar, yasal mevzuat ve süreler dikkate alınarak bir hukuk profesyoneli eşliğinde değerlendirilmelidir.",
+    "yanBaslik": "Hukuki destek",
+    "yanMetin": "Somut olayınızın değerlendirilmesi için randevu alabilirsiniz.",
+    "digerBaslik": "Diğer yazılar."
+  },
+  "sssSayfa": {
+    "baslik": "Sıkça Sorulan Sorular",
+    "giris": "Çalışma alanlarımıza ilişkin en çok merak edilen sorular ve kısa cevapları.",
+    "seoTitle": "Sıkça Sorulan Sorular | Milas Avukat Yılmaz Çağlayan",
+    "seoDesc": "Ceza, tazminat, icra, iş, ticaret, gayrimenkul, idare, miras, boşanma ve otelcilik hukukuna ilişkin sıkça sorulan sorular ve cevapları – Milas, Muğla."
+  },
+  "iletisimSayfa": {
+    "baslik": "İletişim Bilgileri",
+    "giris": "Hukuki danışmanlık randevuları ve yasal süreçlerle ilgili bilgilendirmeler için aşağıdaki kanallar üzerinden iletişim sağlayabilirsiniz.",
+    "seoTitle": "İletişim | Avukat Yılmaz Çağlayan – Milas, Muğla",
+    "seoDesc": ""
+  },
+  "iletisimBandi": {
+    "ust": "İletişim",
+    "baslik": "Hukuki danışmanlık için randevu alın.",
+    "metin": "Randevulu müvekkil kabulleri gerçekleştirilmektedir. Somut olayınızı yasal süreler gözetilerek birlikte değerlendirelim."
+  },
+  "altBilgi": {
+    "metin": "Milas ve Muğla'da Hukuki Danışmanlık ve Avukatlık Hizmetleri. Faaliyetlerimiz ağırlıklı olarak Muğla, Milas, Bodrum ve çevre adliyelerindeki adli ve idari yargı mercilerini kapsamaktadır.",
+    "uyari": "İçerikler genel bilgilendirme amaçlıdır; hukuki tavsiye niteliği taşımaz."
+  }
+}

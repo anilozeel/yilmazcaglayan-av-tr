@@ -1,70 +1,32 @@
 # yilmazcaglayan.av.tr
 
-Av. Yılmaz Çağlayan | Milas Avukat & Hukuk Bürosu web sitesi. Bağımlılık gerektirmeyen statik site.
-
-## Çalıştırma (localhost)
-- Windows: `baslat.bat` dosyasına çift tıklayın → http://localhost:8080
-- Komut satırı: `node build.js` (siteyi `dist/` klasörüne üretir), ardından `node server.js`
-
-`dist/` klasörü hazır sitedir; sunucuya yüklenecek olan budur.
-
-## İçerik güncelleme
-Tüm içerik `content/` klasöründedir. Değişiklikten sonra `node build.js` çalıştırın.
-
-| Dosya | İçerik |
-|---|---|
-| `content/site.js` | Telefon, e-posta, adres, çalışma saatleri, **Google Analytics** ve **Search Console** kodları |
-| `content/alanlar.js` | Çalışma alanları (yeni alan = listeye yeni kayıt) |
-| `content/eserler.js` | Kitaplar |
-| `content/sss.js` | Sıkça sorulan sorular ve sorumluluk reddi |
-| `content/makaleler/*.md` | Makaleler |
-
-### Yeni makale eklemek
-`content/makaleler/` içine yeni bir `.md` dosyası ekleyin (ör. `12-yeni-makale.md`):
-
-```
----
-title: Makale başlığı
-date: 2026-11-01
-area: ceza-hukuku
-related: hukuki-danismanlik
-description: Google'da görünecek 150-160 karakterlik açıklama.
----
-Giriş paragrafı...
-
-## Ara başlık
-
-Paragraf... **kalın** yazı için iki yıldız.
-
-* liste maddesi
-> Öne çıkan alıntı
-```
-`area` / `related` değerleri `content/alanlar.js` içindeki `slug` alanlarıdır. Makale; listeye, site haritasına, ilgili çalışma alanı sayfasına ve "Diğer yazılar" bölümlerine kendiliğinden eklenir.
-
-### Görseller
-- Themis: `assets/img/themis.jpg` eklenirse ana sayfada çizim yerine bu fotoğraf kullanılır.
-- Kitap kapakları: `assets/img/kitaplar/<slug>.jpg` (ör. `ceza-muhakemesi-kanunu.jpg`) eklenirse tipografik kapak yerine gerçek kapak gösterilir.
+Av. Yılmaz Çağlayan | Milas Avukat & Hukuk Bürosu web sitesi.
 
 ## Yönetim paneli
-Adres: sitenin sonuna `/yonetim/` ekleyin (ör. `https://yilmazcaglayan.av.tr/yonetim/`). Arama motorlarına kapalıdır.
+Adres: **http://yilmazcaglayan.av.tr/yonetim/** (SSL kurulduktan sonra https://)
 
-- **Makaleler:** ekleme, düzenleme, silme; kapak görseli ve metin içi görsel. Görseller tarayıcıda otomatik küçültülür (WEBP).
-- **Ziyaretçiler:** ziyaretçi ve sayfa görüntüleme sayıları, şehir, il, ülke, en çok okunan sayfalar, gelinen siteler, cihazlar (Umami Cloud, çerezsiz).
-- **Ayarlar:** GitHub bağlantısı, istatistik bağlantısı, kullanıcı adı ve şifre değişikliği.
+Panel hosting'in kendi üzerinde (PHP) çalışır; GitHub hesabı veya anahtar gerektirmez. Panelden yapılan her kayıt
+siteyi anında yeniden oluşturur. Düzenlenebilenler: makaleler, ana sayfa slaytları (geçiş süresi dahil), çalışma alanları,
+yayımlanmış eserler, özgeçmiş, sıkça sorulan sorular, tüm sayfa metinleri, iletişim bilgileri ve harita konumu, görseller.
+Ziyaretçi istatistikleri (ülke, şehir, sayfa, kaynak, cihaz) sitenin kendisinde, IP adresi saklanmadan tutulur.
 
-Panel, kaydedilen her değişikliği GitHub deposuna yazar; GitHub Actions siteyi yeniden derleyip 1–2 dakika içinde yayına alır.
-GitHub ve istatistik anahtarları `content/panel.json` içinde, panel şifresiyle (PBKDF2 + AES-GCM) şifrelenmiş olarak durur; açık hâlde hiçbir yerde saklanmaz.
+## Yapı
+| Klasör / dosya | Görev |
+|---|---|
+| `lib/render.js` | Sayfa şablonu. Hem `build.js` (Node) hem de yönetim paneli (tarayıcı) aynı dosyayı kullanır. |
+| `veri-ilk/*.json` | Başlangıç içerikleri. Sunucuda kayıtlı içerik varsa o kullanılır (`yc-veri/`). |
+| `sunucu/` | PHP dosyaları: `yonetim/` (panel + API), `sayac.php` (ziyaretçi sayacı). |
+| `assets/` | CSS, JS, görseller. |
+| `.github/workflows/yayinla.yml` | Her güncellemede sunucudaki panel verisini alır, siteyi derler ve FTP ile yükler. Konum veritabanını (DB-IP Lite) her ay yeniler. |
 
-Şifre unutulursa: `node scripts/panel-sifre.js <kullanici-adi> <yeni-sifre>` ile `content/panel.json` yeniden oluşturulup depoya yüklenir. Bu işlem kayıtlı anahtarları da sıfırlar; panelde Ayarlar'dan yeniden girilir.
+Sunucudaki `yc-veri/` klasörü panel verilerini, yedekleri ve istatistikleri tutar; dışarıdan erişime kapalıdır ve
+otomatik yayın sırasında üzerine yazılmaz.
 
-## Yayına alırken
-1. `content/site.js` içinde `gaId` (GA4 ölçüm kimliği) ve `gscVerification` (Search Console doğrulama kodu) alanlarını doldurun, `node build.js` çalıştırın.
-2. `dist/` içeriğini sunucuya yükleyin.
-3. Search Console'a `https://yilmazcaglayan.av.tr/sitemap.xml` adresini gönderin.
-4. Google İşletme Profili'ni aynı adres/telefonla açıp siteye bağlayın (yerel aramalar için en etkili adım).
+## Yerelde çalıştırma
+```
+node build.js            # dist/ klasörüne üretir
+php -S localhost:8080 -t dist
+```
 
-## GitHub Pages önizlemesi
-`docs/` klasörü GitHub Pages için hazırlanmış önizleme sürümüdür (Google'a kapalı, `noindex`).
-- Güncellemek için: `node build.js --out=docs --base=/yilmazcaglayan-av-tr` (veya `npm run build:github`)
-- GitHub'da: Settings → Pages → Branch: `main`, klasör: `/docs`
-- Gerçek alan adına (yilmazcaglayan.av.tr) geçerken `dist/` klasörü kullanılır; o sürüm Google'a açıktır.
+`content/` klasörü eski yapıdan kalmıştır; içerikler artık `veri-ilk/` ve panel üzerinden yönetilir.
+Ziyaretçi konum verisi: IP Geolocation by DB-IP (https://db-ip.com), CC BY 4.0.
